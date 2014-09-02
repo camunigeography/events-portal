@@ -20,6 +20,7 @@
 #!#  Feed configuration
 #!#  Move feeds to /feeds/
 #!#  Automatic mailshot; configure starting text, e-mail recipient and sending period
+#!#  Event search
 
 
 /* # Apache setup:
@@ -718,7 +719,7 @@ class eventsPortal extends frontControllerApplication
 			'clone' => 'insert',
 		);
 		
-		# Validate action (in case the query string has been entered manually rather than through mod_rewrite)
+		# Validate action
 		if (!isSet ($actions[$action])) {return false;}
 		
 		# Cache the original event ID for later use
