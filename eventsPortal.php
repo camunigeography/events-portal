@@ -1,6 +1,6 @@
 <?php
 
-# Online event listing system
+# Event portal system
 # Version 1.1.0
 # 
 # Licence: GPL
@@ -10,7 +10,7 @@
 
 /* Proposed developments */
 
-#!#  iCal exort
+#!#  iCal export
 #!#  Map panel for locations
 #!#  Events over several days
 #!#  Event recurrence - see:   http://mywebland.com/forums/showtopic.php?p=3806   http://forums.devx.com/showthread.php?threadid=136165   http://archives.postgresql.org/pgsql-sql/2002-08/msg00302.php
@@ -21,40 +21,6 @@
 #!#  Move feeds to /feeds/
 #!#  Automatic mailshot; configure starting text, e-mail recipient and sending period
 #!#  Event search
-
-
-/* # Apache setup:
-
-# Events portal system
-<Macro MacroEventsPortal $baselocation $description>
-	Use MacroFrontControllerApplication "$baselocation/" "$description"
-	<Location $baselocation/>
-		php_value output_buffering 32768
-		AAAlwaysDecode On
-	</Location>
-	RewriteRule ^$baselocation/listings/$ $baselocation/index.html?action=eventlistings [L]
-	RewriteRule ^$baselocation$ $baselocation/ [R]
-	RewriteRule ^$baselocation/feed.html$ $baselocation/index.html?action=eventsfeedpage [L]
-	RewriteRule ^$baselocation/([^/]+)/feed.html$ $baselocation/index.html?action=eventsfeedpage [L]
-	RewriteRule ^$baselocation/feed(|unstyled).(js|xml)$ $baselocation/index.html?action=eventsfeed&type=$2&style=$1 [L]
-	RewriteRule ^$baselocation/([^/]+)/feed(|unstyled).(js|xml)$ $baselocation/index.html?action=eventsfeed&type=$3&category=$1&style=$2 [L]
-	RewriteRule ^$baselocation/add.html$ $baselocation/index.html?action=addevents [L]
-	RewriteRule ^$baselocation/(logo|logosmall).png$ - [L]
-	RewriteRule ^$baselocation/([^/]+)/$ $baselocation/index.html?action=home&item=$1 [L]
-	RewriteRule ^$baselocation/([^/]+)$ $baselocation/$1/ [R]
-	RewriteRule ^$baselocation/([0-9]+)/([a-z0-9-]+)/$ $baselocation/index.html?action=showevent&item=$1&urlslug=$2 [L]
-	RewriteRule ^$baselocation/([0-9]+)/([a-z0-9-]+)$ $baselocation/$1/$2/ [R]
-	RewriteRule ^$baselocation/([0-9]+)/([a-z0-9-]+)/(edit|clone|delete).html$ $baselocation/index.html?action=$3event&item=$1&urlslug=$2 [L]
-	<LocationMatch "$baselocation/(.*)feed(|unstyled)\.(js|xml)$">
-		php_admin_value auto_prepend_file none
-		php_admin_value auto_append_file none
-	</LocationMatch>
-</Macro>
-
-# Events@cam (native)
-Use MacroEventsPortal "/events" "Events system"
-
-*/
 
 
 # Define a class for creating an online event listing system
