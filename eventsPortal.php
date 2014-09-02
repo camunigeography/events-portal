@@ -1,7 +1,7 @@
 <?php
 
 # Online event listing system
-# Version 1.0.1
+# Version 1.0.2
 # 
 # Licence: GPL
 # (c) Martin Lucas-Smith, Cambridge University Students' Union
@@ -61,7 +61,7 @@ require_once ('frontControllerApplication.php');
 class eventsPortal extends frontControllerApplication
 {
 	# Function to assign defaults additional to the general application defaults
-	function defaults ()
+	public function defaults ()
 	{
 		# Specify available arguments as defaults or as NULL (to represent a required argument)
 		$defaults = array (
@@ -114,7 +114,7 @@ class eventsPortal extends frontControllerApplication
 	
 	
 	# Function to assign supported actions
-	function actions ()
+	public function actions ()
 	{
 		# Define available tasks
 		$actions = array (
@@ -276,7 +276,7 @@ class eventsPortal extends frontControllerApplication
 	
 	
 	# Additional initialisation
-	function main ()
+	public function main ()
 	{
 		# Load required libraries
 		require_once ('image.php');
@@ -285,7 +285,7 @@ class eventsPortal extends frontControllerApplication
 	
 	
 	# Events front page
-	function home ($eventType = false)
+	public function home ($eventType = false)
 	{
 		# Start the HTML
 		$html  = '';
@@ -314,7 +314,7 @@ class eventsPortal extends frontControllerApplication
 	
 	
 	# Administrator options
-	function admin ()
+	public function admin ()
 	{
 		# Create the HTML
 		parent::admin ();
@@ -331,7 +331,7 @@ class eventsPortal extends frontControllerApplication
 	
 	
 	# Events addition portal page
-	function addevents ()
+	public function addevents ()
 	{
 		# Start the HTML
 		$html  = '';
@@ -515,7 +515,7 @@ class eventsPortal extends frontControllerApplication
 	
 	
 	# RSS feeds; RSS spec at http://cyber.law.harvard.edu/rss/rss.html
-	function eventsfeedxml ($events, $organisationId = false, $feedDescription)
+	private function eventsfeedxml ($events, $organisationId = false, $feedDescription)
 	{
 		# Send the correct header
 		header ('Content-Type: application/xml; charset=utf-8');
@@ -566,7 +566,7 @@ class eventsPortal extends frontControllerApplication
 	
 	
 	# Javascript embeddable page
-	function eventsfeedjs ($events, $organisationId = false, $feedDescription)
+	private function eventsfeedjs ($events, $organisationId = false, $feedDescription)
 	{
 		# Determine whether to add style
 		$styled = true;
@@ -630,7 +630,7 @@ class eventsPortal extends frontControllerApplication
 	
 	
 	# Feedback page
-	function feedback ()
+	public function feedback ()
 	{
 		# Add a box if required
 		if ($this->settings['faqHtml']) {
@@ -663,7 +663,7 @@ class eventsPortal extends frontControllerApplication
 	
 	
 	# Organisation-specific event addition, always called by the host application
-	function addevent ($providerId, $organisation, $headingLevel = 2)
+	public function addevent ($providerId, $organisation, $headingLevel = 2)
 	{
 		# Hand off to the event manipulation
 		return $this->manipulate ($action = str_replace ('event', '', __FUNCTION__), $eventId = NULL, $providerId, $organisation, $headingLevel);
@@ -671,7 +671,7 @@ class eventsPortal extends frontControllerApplication
 	
 	
 	# Function to edit an event
-	function editevent ($eventId)
+	public function editevent ($eventId)
 	{
 		# Hand off to the event manipulation
 		return $this->manipulate ($action = str_replace ('event', '', __FUNCTION__), $eventId);
@@ -679,7 +679,7 @@ class eventsPortal extends frontControllerApplication
 	
 	
 	# Function to delete an event
-	function deleteevent ($eventId)
+	public function deleteevent ($eventId)
 	{
 		# Hand off to the event manipulation
 		return $this->manipulate ($action = str_replace ('event', '', __FUNCTION__), $eventId);
@@ -687,7 +687,7 @@ class eventsPortal extends frontControllerApplication
 	
 	
 	# Function to clone an event
-	function cloneevent ($eventId)
+	public function cloneevent ($eventId)
 	{
 		# Hand off to the event manipulation
 		return $this->manipulate ($action = str_replace ('event', '', __FUNCTION__), $eventId);
@@ -695,7 +695,7 @@ class eventsPortal extends frontControllerApplication
 	
 	
 	# Function to list a specific organisation's upcoming events
-	function showevent ($eventId)
+	public function showevent ($eventId)
 	{
 		# Hand off to the event manipulation
 		return $this->manipulate ($action = str_replace ('event', '', __FUNCTION__), $eventId);
@@ -1038,7 +1038,7 @@ class eventsPortal extends frontControllerApplication
 	
 	
 	# Function to produce a listings export
-	function eventlistings ()
+	public function eventlistings ()
 	{
 		# Get the event data
 		if (!$data = $this->getEvents ($providerId = false, $organisationId = false, $eventId = false, $eventType = false, $forthcomingOnly = true, $allowHidden = false, $ensureNotDeleted = true)) {
@@ -1083,7 +1083,7 @@ class eventsPortal extends frontControllerApplication
 	
 	
 	# Function to list upcoming events
-	function eventsList ($providerId, $organisation = false, $organisationStandalonePage = false, $eventType = false)
+	private function eventsList ($providerId, $organisation = false, $organisationStandalonePage = false, $eventType = false)
 	{
 		# Start the HTML
 		$html  = '';
@@ -1238,7 +1238,7 @@ class eventsPortal extends frontControllerApplication
 	
 	
 	# Function to retrieve a list of events from the database
-	function getEvents ($providerId = false, $organisationId = false, $eventId = false, $eventType = false, $forthcomingOnly = true, $allowHidden = false, $ensureNotDeleted = true)
+	private function getEvents ($providerId = false, $organisationId = false, $eventId = false, $eventType = false, $forthcomingOnly = true, $allowHidden = false, $ensureNotDeleted = true)
 	{
 		# Construct the query
 		#!# Migrate addslashes to prepared statements
