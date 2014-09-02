@@ -1,7 +1,7 @@
 <?php
 
 # Online event listing system
-# Version 1.0.3
+# Version 1.0.4
 # 
 # Licence: GPL
 # (c) Martin Lucas-Smith, Cambridge University Students' Union
@@ -867,29 +867,36 @@ class eventsPortal extends frontControllerApplication
 			return;
 		}
 		
+		# Determine the picture message
+		$pictureAlready = ($data && file_exists ($this->settings['eventsImageStoreRoot'] . $data['eventId'] . '.' . $this->settings['imageOutputFormat']));
+		$pictureMessage = 'You can upload an image if you wish. It will be automatically resized where necessary.';
+		if (($action != 'add') && $pictureAlready) {
+			$pictureMessage = 'You can upload a different image if you wish; otherwise the original image will be used. Any new image will be automatically resized where necessary.';
+		}
+		
 		# Event form, binded against the database structure
 		require_once ('ultimateForm.php');
 		$form = new form (array (
 			'developmentEnvironment' => ini_get ('display_errors'),
 			'formCompleteText' => false,
-			'div' => 'graybox editeventform',
+			'div' => 'graybox lines',
 			'databaseConnection' => $this->databaseConnection,
 			'displayRestrictions' => false,
-			'display' => 'template',
-			'displayTemplatePatternWidget' => '{{{%element}}}',	/// {{{ and }}} have been used to lower the likelihood of data like {blah} being substituted
-			'displayTemplate' => $this->eventHtmlTemplate ($action, $organisation, ($data ? $data : false)),
 		));
 		$dataBindingAttributes = array (
 			'eventName' => array ('disallow' => array ("^([-A-Z[:space:]\*\"\']+)$" => 'In the title, please type out non-acronyms in normal sentence case rather than in ALL CAPS'), ),	// This regexp is not foolproof but will catch most
-			'picture' => array ('type' => 'upload', 'directory' => $imageDirectory = $this->settings['eventsImageStoreRoot'], 'flatten' => true, ),
+			'locationName' => array ('heading' => array ('3' => 'Where and when?'), ),
 			'locationLongitude' => array ('type' => 'hidden', 'values' => array ('locationLongitude' => 0), ),
 			'locationLatitude' => array ('type' => 'hidden', 'values' => array ('locationLatitude' => 0), ),
+			'recurrence' => array ('editable' => false, 'default' => 'Just this day/time', ),
 			'webpageUrl' => array ('type' => 'input', 'regexpi' => '(http|https)://'),
+			'facebookUrl' => array ('regexpi' => '(http|https)://'),
 			'description' => array ('cols' => 60, 'rows' => 4, ),
 			"eventType__JOIN__{$this->settings['database']}__types__reserved" => array ('type' => 'select', 'values' => $this->getEventTypes (), ),
-			'recurrence' => array ('editable' => false, 'default' => 'Just this day/time', ),
 			'startDate' => array ('default' => ($data ? $data['startDate'] : date ('Y') . '0000'), ),
-			'eligibility' => array ('type' => 'select', 'values' => $this->settings['eligibilityOptions']),
+			'contactInfo' => array ('heading' => array ('3' => 'Who people can contact for more details'), 'title' => 'Contact' . ($organisation['typeFormatted'] ? ' (if not main ' . $organisation['typeFormatted'] . ' details)' : '') . ', e.g. e-mail address'),
+			'eligibility' => array ('heading' => array ('3' => 'Other details'), 'type' => 'select', 'values' => $this->settings['eligibilityOptions']),
+			'picture' => array ('heading' => array ('3' => 'Image/picture/logo (if any)', 'p' => $pictureMessage, ), 'type' => 'upload', 'directory' => $imageDirectory = $this->settings['eventsImageStoreRoot'], 'flatten' => true, ),
 		);
 		if (!$data) {
 			$dataBindingAttributes['eligibility']['default'] = $this->settings['eligibilityOptions'][0];
@@ -900,6 +907,8 @@ class eventsPortal extends frontControllerApplication
 			'data' => ($data ? $data : array ()),
 			'exclude' => array ('eventId', 'urlSlug', 'provider', 'organisation', 'user', 'lastUpdated', 'submissionTime', 'adminBan', 'deleted'),
 			'attributes' => $dataBindingAttributes,
+			#!# Need to reorder fields in database table
+			'ordering' => array ('eventName', 'description', "eventType__JOIN__{$this->settings['database']}__types__reserved", 'locationName', 'startDate', 'startTime', 'endDate', 'endTime', 'contactInfo', 'eligibility', 'cost', 'webpageUrl', 'facebookUrl', 'picture', ),
 		));
 		
 		# Add sanity-checking constraints
@@ -1407,59 +1416,6 @@ class eventsPortal extends frontControllerApplication
 		# Return the HTML
 		return $html;
 	}
-	
-	
-	# Function to provide the template for events
-	private function eventHtmlTemplate ($action, $organisation, $currentData = false)
-	{
-		# Determine the picture message
-		$pictureAlready = ($currentData && file_exists ($this->settings['eventsImageStoreRoot'] . $currentData['eventId'] . '.' . $this->settings['imageOutputFormat']));
-		$pictureMessage = 'You can upload an image if you wish. It will be automatically resized where necessary.';
-		if (($action != 'add') && $pictureAlready) {
-			$pictureMessage = 'You can upload a different image if you wish; otherwise the original image will be used. Any new image will be automatically resized where necessary.';
-		}
-		
-		# Construct the template (spans will appear in editing mode only)
-		$template  = '
-		<div id="eventform">
-			{[[PROBLEMS]]}
-			<h2 class="widget">{{{eventName}}}</h2>
-			<p class="label">(* Name of event)</p>
-			<p class="widget">{{{description}}}</p>
-			<p class="label">(* Brief description)</p>
-			<p>* Type of event:</td><td>{{{eventType__JOIN__' . $this->settings['database'] . '__types__reserved}}}</p>
-			<h3>When and where?</h3>
-			<table class="lines">
-				<tr><td>* Where:</td><td colspan="2">{{{locationName}}}</td></tr>
-				<tr><td>* When:</td><td>{{{startDate}}}</td><td>{{{startTime}}}</td></tr>
-				<tr><td>Until:</td><td>{{{endDate}}}</td><td>{{{endTime}}}</td></tr>
-				<tr><td>* Recurrence?</td><td colspan="2">{{{recurrence}}}<br /><p class="label">(Support for recurrent events will be added shortly;<br />however, you can clone events from an event listing page.)</span></td></tr>
-			</table>
-			<h3>Picture</h3>
-			<p>' . $pictureMessage . '</p>
-			<p>Upload picture: {{{picture}}}</p>
-			<h3>Other details</h3>
-			<table class="lines">
-				<tr><td>* Open to:</td><td>{{{eligibility}}}</td></tr>
-				<tr><td>Cost (if any):</td><td>{{{cost}}}</td></tr>
-				<tr><td>Contact (if not main ' . $organisation['typeFormatted'] . ' details):</td><td>{{{contactInfo}}}</td></tr>
-				<tr><td>Event webpage (if any):</td><td>{{{webpageUrl}}}</td></tr>
-				<tr><td>Facebook event page (if any):</td><td>{{{facebookUrl}}}</td></tr>
-			</table>
-			<h3>Options (not displayed on event page itself)</h3>
-			<table class="lines">
-				<tr><td>* Event is shown in listings (i.e. event is visible):</td><td>{{{visible}}}</td></tr>
-			</table>
-			<!-- {{{guPublicity}}} -->
-			<p class="comment"><em>* below indicates required information.</em></p>
-			<p>{[[SUBMIT]]}</p>
-		</div>
-		';
-		
-		# Return the template
-		return $template;
-	}
-	
 	
 	
 	
