@@ -1,7 +1,7 @@
 <?php
 
 # Online event listing system
-# Version 1.0.5
+# Version 1.0.6
 # 
 # Licence: GPL
 # (c) Martin Lucas-Smith, Cambridge University Students' Union
@@ -882,6 +882,7 @@ class eventsPortal extends frontControllerApplication
 			'div' => 'graybox lines',
 			'databaseConnection' => $this->databaseConnection,
 			'displayRestrictions' => false,
+			'autofocus' => true,
 		));
 		$dataBindingAttributes = array (
 			'eventName' => array ('disallow' => array ("^([-A-Z[:space:]\*\"\']+)$" => 'In the title, please type out non-acronyms in normal sentence case rather than in ALL CAPS'), ),	// This regexp is not foolproof but will catch most
@@ -891,11 +892,12 @@ class eventsPortal extends frontControllerApplication
 			'locationLatitude' => array ('type' => 'hidden', 'values' => array ('locationLatitude' => 0), ),
 			'recurrence' => array ('editable' => false, 'default' => 'Just this day/time', ),
 			*/
-			'webpageUrl' => array ('type' => 'input', 'regexpi' => '(http|https)://'),
-			'facebookUrl' => array ('regexpi' => '(http|https)://'),
+			'webpageUrl' => array ('type' => 'input', 'regexpi' => '(http|https)://', 'placeholder' => 'http://...', ),
+			'facebookUrl' => array ('regexpi' => '(http|https)://', 'placeholder' => 'http://...', ),
 			'description' => array ('cols' => 60, 'rows' => 4, ),
 			"eventType__JOIN__{$this->settings['database']}__types__reserved" => array ('type' => 'select', 'values' => $this->getEventTypes (), ),
-			'startDate' => array ('default' => ($data ? $data['startDate'] : date ('Y') . '0000'), ),
+			'startDate' => array ('picker' => true, 'default' => ($data ? $data['startDate'] : date ('Y') . '0000'), ),
+			//'endDate' => array ('picker' => true, ),
 			'contactInfo' => array ('heading' => array ('3' => 'Who people can contact for more details'), 'title' => 'Contact' . ($organisation['typeFormatted'] ? ' (if not main ' . $organisation['typeFormatted'] . ' details)' : '') . ', e.g. e-mail address'),
 			'eligibility' => array ('heading' => array ('3' => 'Other details'), 'type' => 'select', 'values' => $this->settings['eligibilityOptions']),
 			'picture' => array ('heading' => array ('3' => 'Image/picture/logo (if any)', 'p' => $pictureMessage, ), 'type' => 'upload', 'directory' => $imageDirectory = $this->settings['eventsImageStoreRoot'], 'flatten' => true, ),
