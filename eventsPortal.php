@@ -1,7 +1,7 @@
 <?php
 
 # Online event listing system
-# Version 1.0.0
+# Version 1.0.1
 # 
 # Licence: GPL
 # (c) Martin Lucas-Smith, Cambridge University Students' Union
@@ -76,11 +76,10 @@ class eventsPortal extends frontControllerApplication
 			'settingsTableExplodeTextarea' => true,
 			
 			# E-mail addresses
-			'administratorEmail' => false,
 			'feedbackRecipient' => false,
 			
 			# GUI
-			'div' => 'events',
+			'div' => 'eventsportal',
 			
 			# Branding and configuration
 			'applicationName' => 'Events',
@@ -104,6 +103,9 @@ class eventsPortal extends frontControllerApplication
 			# Events
 			'eventsOnProviderPage' => 4,
 			'eventsMaxInFeed' => 20,
+			
+			# Auth
+			'internalAuth' => false,
 		);
 		
 		# Return the defaults
@@ -185,19 +187,21 @@ class eventsPortal extends frontControllerApplication
 	}
 	
 	
-	# Database structure
+	# Database structure definition
 	public function databaseStructure ()
 	{
 		return "
-			CREATE TABLE IF NOT EXISTS `administrators` (
-			  `crsid` varchar(10) COLLATE utf8_unicode_ci NOT NULL,
+			CREATE TABLE IF NOT EXISTS `{$this->settings['administrators']}` (
+			  `username` varchar(" . ($this->settings['internalAuth'] ? '255' : '10') . ") COLLATE utf8_unicode_ci NOT NULL,
 			  `active` enum('Y','N') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'Y',
 			  `name` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
 			  `email` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
-			  PRIMARY KEY (`crsid`)
+			  PRIMARY KEY (`username`)
 			) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Administrators';
 			
-			CREATE TABLE IF NOT EXISTS `events` (
+			/* INSERT INTO `{$this->settings['administrators']}` VALUES ('{$this->user}',  'Y',  'Administrator', '{$this->settings['administratorEmail']}'); */
+			
+			CREATE TABLE IF NOT EXISTS `{$this->settings['table']}` (
 			  `eventId` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Unique key',
 			  `urlSlug` varchar(100) COLLATE utf8_unicode_ci NOT NULL COMMENT 'URL part',
 			  `provider` varchar(100) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Event provider',
@@ -228,7 +232,7 @@ class eventsPortal extends frontControllerApplication
 			  PRIMARY KEY (`eventId`)
 			) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Events';
 			
-			CREATE TABLE IF NOT EXISTS `settings` (
+			CREATE TABLE IF NOT EXISTS `{$this->settings['settingsTable']}` (
 			  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Automatic key (ignored)',
 			  `feedbackRecipient` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'E-mail of feedback recipient',
 			  `applicationName` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'Events' COMMENT 'Brand name of the application',
