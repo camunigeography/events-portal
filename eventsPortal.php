@@ -1,7 +1,7 @@
 <?php
 
 # Online event listing system
-# Version 1.0.6
+# Version 1.1.0
 # 
 # Licence: GPL
 # (c) Martin Lucas-Smith, Cambridge University Students' Union
@@ -107,6 +107,9 @@ class eventsPortal extends frontControllerApplication
 			
 			# Auth
 			'internalAuth' => false,
+			
+			# Whether to enable organisations mode, which uses the providers infrastructure
+			'organisationsMode' => true,
 		);
 		
 		# Return the defaults
@@ -181,7 +184,9 @@ class eventsPortal extends frontControllerApplication
 		$this->globalActions['home']['tab'] = '<img src="/images/icons/application_view_list.png" alt="" class="icon"> Listing of all events';
 		
 		# Add in external provider links
-		$actions += $this->providerApi->getProviderTabs ();
+		if ($this->settings['organisationsMode']) {
+			$actions += $this->providerApi->getProviderTabs ();
+		}
 		
 		# Return the actions
 		return $actions;
@@ -267,11 +272,13 @@ class eventsPortal extends frontControllerApplication
 		#!# Ideally remove this hard-code
 		$this->eventsBaseUrl = '/events';
 		
-		# Get organisation providers
-		require_once ('providers.php');
-		$this->providerApi = new providers ();
-		#!# Needs to have error handling
-		$this->providers = $this->providerApi->getProviders ();
+		# Get organisation providers if enabled
+		if ($this->settings['organisationsMode']) {
+			require_once ('providers.php');
+			$this->providerApi = new providers ();
+			#!# Needs to have error handling
+			$this->providers = $this->providerApi->getProviders ();
+		}
 		
 	}
 	
@@ -336,6 +343,13 @@ class eventsPortal extends frontControllerApplication
 	{
 		# Start the HTML
 		$html  = '';
+		
+		# If not in organisations mode, jump directly to the addition form
+		if (!$this->settings['organisationsMode']) {
+			$html .= $this->addevent (NULL, NULL);
+			echo $html;
+			return;
+		}
 		
 		# Specify the organisation fields required
 		$fieldsRequired = array ('logoLocation', 'organisationName', 'eventsBaseUrl', );
@@ -663,7 +677,7 @@ class eventsPortal extends frontControllerApplication
 	}
 	
 	
-	# Organisation-specific event addition, always called by the host application
+	# Organisation-specific event addition; in organisations mode, this is called by the host application
 	public function addevent ($providerId, $organisation, $headingLevel = 2)
 	{
 		# Hand off to the event manipulation
@@ -710,6 +724,20 @@ class eventsPortal extends frontControllerApplication
 		# Start the HTML
 		$html  = '';
 		
+		# If not in organisations mode, provide a null object implementation for the provider and organisation
+		if (!$this->settings['organisationsMode']) {
+			$providerId = 'internal';
+			$organisation = array (
+				'id' => 'internal',
+				'typeFormatted' => false,
+				'events' => true,
+				'organisationName' => false,
+				'emailVisible' => false,
+				'timestamp' => false,
+				'eventsBaseUrl' => $this->baseUrl,
+			);
+		}
+		
 		# Determine available actions against database actions
 		$actions = array (
 			'add' => 'insert',		// This is the only one that will have the providerId and organisation being supplied
@@ -725,11 +753,9 @@ class eventsPortal extends frontControllerApplication
 		# Cache the original event ID for later use
 		$originalEventId = $eventId;
 		
-		# If not adding, get the event data and the organisationId
-		if ($action == 'add') {	// i.e. there is a $providerId and an $organisation
-			$data = array ();
-			$organisationId = $organisation['id'];
-		} else {
+		# If not adding, get the event data
+		$data = array ();
+		if ($action != 'add') {
 			if (!$data = ($this->getEvents (false, false, $eventId, false, $forthcomingOnly = (!$eventId), $allowHidden = ($action != 'show')))) {
 				#!# This stage should be supressed for ones being hidden
 				#!# Throw 404
@@ -737,29 +763,49 @@ class eventsPortal extends frontControllerApplication
 				echo $html;
 				return false;
 			}
-			
-			# Assign the providerId and organisationId
-			$providerId		= $data['provider'];
+		}
+		
+		# If not adding, assign the organisationId
+		if ($action == 'add') {	// i.e. $providerId and $organisation are both not NULL (but may be false)
+			$organisationId = $organisation['id'];
+		} else {
 			$organisationId	= $data['organisation'];
-			
-			# Validate the organisation and get its details (which will not have entity conversion done); this will be empty if no events are wanted
-			if (!$organisation = $this->providerApi->getOrganisationDetails ($providerId, $organisationId)) {
-			#!# Needs to report there is no such organisation or they have events switched off
-				return false;
+			if ($this->settings['organisationsMode']) {
+				
+				# Assign the providerId and organisationId
+				$providerId		= $data['provider'];
+				
+				# Validate the organisation and get its details (which will not have entity conversion done); this will be empty if no events are wanted
+				if (!$organisation = $this->providerApi->getOrganisationDetails ($providerId, $organisationId)) {
+				#!# Needs to report there is no such organisation or they have events switched off
+					return false;
+				}
 			}
 		}
 		
 		# Determine whether the user is a manager of this organisation, using the providers infrastructure
-#!# userIsManager should be an additional check but effectively an assert as the caller should not allow eventsPortal::addevent (and thus eventsPortal::manipulate) to be called
-#!# Refactor userIsManager to use $organisation rather than $organisation['id']
-		$userIsManager = $this->userIsManager ($providerId, $organisation['id']);
+		if ($this->settings['organisationsMode']) {
+			#!# userIsManager should be an additional check but effectively an assert as the caller should not allow eventsPortal::addevent (and thus eventsPortal::manipulate) to be called
+			#!# Refactor userIsManager to use $organisation rather than $organisation['id']
+			$userIsManager = $this->userIsManager ($providerId, $organisation['id']);
+		} else {
+			$userIsManager = ($this->user && $data && ($data['user'] == $this->user));
+		}
 		
 		# Check that the user has rights to this organisation or that they are an administrator
 		if ($action != 'show') {
 			if (!$userIsManager) {
-				$provider = $this->providers[$providerId];
-				echo "\n<p>You are not a manager of this {$organisation['typeFormatted']}'s entry and so cannot make changes to it. If you think you should be, please use the <a rel=\"nofollow\" href=\"{$provider['baseUrl']}{$provider['managerClaimFormLocation']}?organisation=" . htmlspecialchars ($organisation['id']) . "\">manager claim form</a>.</p>";
-				return false;
+				if ($this->settings['organisationsMode']) {
+					$provider = $this->providers[$providerId];
+					echo "\n<p>You are not a manager of this " . ($organisation['typeFormatted'] ? "{$organisation['typeFormatted']}'s " : '') . "entry and so cannot make changes to it. If you think you should be, please use the <a rel=\"nofollow\" href=\"{$provider['baseUrl']}{$provider['managerClaimFormLocation']}?organisation=" . htmlspecialchars ($organisation['id']) . "\">manager claim form</a>.</p>";
+					return false;
+				} else {
+					#!# bodged-in
+					if ($action != 'add') {
+						echo "\n<p>This does not appear to be your event, so you cannot make changes to it.</p>";
+						return false;
+					}
+				}
 			}
 		}
 		
@@ -773,13 +819,15 @@ class eventsPortal extends frontControllerApplication
 		
 		# Introduce the webform
 		if ($action == 'edit' || $action == 'add' || $action == 'clone') {
-			$html .= "\n<h{$headingLevel} id=\"sectionheading\">" . ucfirst ($action) . " an event for {$organisation['typeFormatted']}: <a href=\"{$organisation['profileBaseUrl']}/\">" . htmlspecialchars ($organisation['organisationName']) . "</a></h{$headingLevel}>";
+			if ($organisation['typeFormatted']) {
+				$html .= "\n<h{$headingLevel} id=\"sectionheading\">" . ucfirst ($action) . ' an event ' . "for {$organisation['typeFormatted']}: <a href=\"{$organisation['profileBaseUrl']}/\">" . htmlspecialchars ($organisation['organisationName']) . '</a>' . "</h{$headingLevel}>";
+			}
 			//if ($data['visible'] == 'Yes') {
 				#!# This is still being visible after editing
 				#!# /events/<id>/<eventslug>/edit.html gives two 'Cancel editing' buttons, one returning to /<hostapplication>/events/<id>/<eventslug>/ , and the other to /events/<id>/<eventslug>/
 				$html .= "\n\n<ul class=\"actions noprint\">
 						<li>" . ($action == 'edit' ? 'Edit' : 'Add') . " the event details below or:</li>
-						<li><a href=\"{$organisation['profileBaseUrl']}/" . ($eventId ? "{$eventId}/{$data['urlSlug']}/" : '') . "\"><img src=\"/images/icons/cross.png\" class=\"icon\" alt=\"*\" /> " . ($eventId ? ($action == 'clone' ? 'Cancel cloning' : 'Cancel editing') : 'Cancel and return to main profile page') . "</a></li>
+						" . ($organisation['typeFormatted'] ? "<li><a href=\"{$organisation['profileBaseUrl']}/" . ($eventId ? "{$eventId}/{$data['urlSlug']}/" : '') . "\"><img src=\"/images/icons/cross.png\" class=\"icon\" alt=\"*\" /> " . ($eventId ? ($action == 'clone' ? 'Cancel cloning' : 'Cancel editing') : 'Cancel and return to main profile page') . "</a></li>" : '') . "
 						<li><a href=\"{$this->eventsBaseUrl}/" . ($eventId ? "{$eventId}/{$data['urlSlug']}/" : '') . "\"><img src=\"/images/icons/cross.png\" class=\"icon\" alt=\"*\" /> " . ($eventId ? ($action == 'clone' ? 'Cancel cloning' : 'Cancel editing') : 'Cancel and return to ' . $this->settings['applicationName']) . "</a></li>
 					</ul>";
 			//}
@@ -801,8 +849,8 @@ class eventsPortal extends frontControllerApplication
 					<li><a href=\"{$this->eventsBaseUrl}/{$eventId}/{$data['urlSlug']}/edit.html\"><img src=\"/images/icons/pencil.png\" alt=\"*\" /> Edit event details</a></li>
 					<li class=\"spaced\"><a href=\"{$this->eventsBaseUrl}/{$eventId}/{$data['urlSlug']}/delete.html\"><img src=\"/images/icons/cross.png\" alt=\"*\" /> Delete the event</a></li>
 					<li><a href=\"{$this->eventsBaseUrl}/{$eventId}/{$data['urlSlug']}/clone.html\"><img src=\"/images/icons/application_double.png\" class=\"icon\" alt=\"*\" /> Clone to a similar event</a></li>
-					<li class=\"spaced\"><a href=\"{$organisation['eventsBaseUrl']}/add.html\"><img src=\"/images/icons/add.png\" class=\"icon\" alt=\"*\" /> Add a new event</a></li>
-					<li><a href=\"{$organisation['profileBaseUrl']}/#events\"><img src=\"/images/icons/application_view_list.png\" class=\"icon\" alt=\"*\" /> Return to {$organisation['typeFormatted']}'s events list</a></li>
+					" . ($organisation['typeFormatted'] ? "<li class=\"spaced\"><a href=\"{$organisation['eventsBaseUrl']}/add.html\"><img src=\"/images/icons/add.png\" class=\"icon\" alt=\"*\" /> Add a new event</a></li>" : '') . "
+					" . ($organisation['typeFormatted'] ? "<li><a href=\"{$organisation['profileBaseUrl']}/#events\"><img src=\"/images/icons/application_view_list.png\" class=\"icon\" alt=\"*\" /> Return to {$organisation['typeFormatted']}'s events list</a></li>" : '') . "
 					<li><a href=\"{$this->eventsBaseUrl}/\"><img src=\"/images/icons/application_view_list.png\" class=\"icon\" alt=\"*\" /> Return to full events list</a></li>
 				</ul>";
 			}
@@ -812,9 +860,12 @@ class eventsPortal extends frontControllerApplication
 			
 			# Add a contact form if relevant
 			#!# This all feels very messy and over-complex
-			$email = ($data['contactInfo'] && application::validEmail ($data['contactInfo']) ? $data['contactInfo'] : ((isSet ($organisation['emailVisible']) && $organisation['emailVisible']) ? $organisation['emailVisible'] : false));
-			if ($email && !$data['isRetrospective']) {
-				$html .= $this->addMailForm ($providerId, $email, $organisation['organisationName'], $organisation['timestamp'], $eventSpecificContact = $data['contactInfo'], $eventMode = true, $subject = $data['eventName']);
+			#!# bodged-in if-statement
+			if ($this->settings['organisationsMode']) {
+				$email = ($data['contactInfo'] && application::validEmail ($data['contactInfo']) ? $data['contactInfo'] : ((isSet ($organisation['emailVisible']) && $organisation['emailVisible']) ? $organisation['emailVisible'] : false));
+				if ($email && !$data['isRetrospective']) {
+					$html .= $this->addMailForm ($providerId, $email, $organisation['organisationName'], $organisation['timestamp'], $eventSpecificContact = $data['contactInfo'], $eventMode = true, $subject = $data['eventName']);
+				}
 			}
 			
 			# End here
@@ -1195,7 +1246,11 @@ class eventsPortal extends frontControllerApplication
 				
 				$table[$eventId]['key'] = strtolower ($event['timeCompiledBrief']);
 				$table[$eventId]['value'] = "<a class=\"name\" href=\"{$this->eventsBaseUrl}/{$eventId}/{$event['urlSlug']}/\">" . htmlspecialchars ($event['eventName']) . '</a>';
-				if (!$organisation) {$table[$eventId]['value'] .= " - <a href=\"{$event['profileBaseUrl']}/\">" . htmlspecialchars ($event['organisationName']) . '</a>';}
+				if (!$organisation) {
+					if ($this->settings['organisationsMode']) {
+						$table[$eventId]['value'] .= " - <a href=\"{$event['profileBaseUrl']}/\">" . htmlspecialchars ($event['organisationName']) . '</a>';
+					}
+				}
 				#!# Add editing links here; but table fields must be consistent
 			}
 			$html .= "\n<h4 class=\"eventslist\">{$event['startDateFormatted']}</h4>";	// The startDateFormatted will be the same for each in the same date, so it's safe to use the most recent
@@ -1301,40 +1356,44 @@ class eventsPortal extends frontControllerApplication
 			$data[$key] = $this->formatEventDatetime ($event);
 		}
 		
-		# Obtain the details for the organisation(s) within the events
-		if ($providerId && $organisationId) {
-			$organisationDetails[$providerId][$organisationId] = $this->providerApi->getOrganisationDetails ($providerId, $organisationId);
-		} else {
+		# Deal with organisation data if required
+		if ($this->settings['organisationsMode']) {
 			
+			# Obtain the details for the organisation(s) within the events
+			if ($providerId && $organisationId) {
+				$organisationDetails[$providerId][$organisationId] = $this->providerApi->getOrganisationDetails ($providerId, $organisationId);
+			} else {
+				
 #!# This version is being called on e.g. /events/3548/charity-photo-competition/ even though that page only actually ever needs to get a single entry
-			# Otherwise, get the details of each organisation (listed as the provider(s) of the event(s) in the events list) who allow their events listed
-			$organisationIdsByProvider = array ();
+				# Otherwise, get the details of each organisation (listed as the provider(s) of the event(s) in the events list) who allow their events listed
+				$organisationIdsByProvider = array ();
+				foreach ($data as $key => $event) {
+					$provider = $event['provider'];
+					$organisationIdsByProvider[$provider][] = $event['organisation'];
+				}
+				foreach ($organisationIdsByProvider as $providerId => $organisationIds) {
+					$organisationIds = array_unique ($organisationIds);
+					$organisationDetails[$providerId] = $this->providerApi->getOrganisationDetails ($providerId, $organisationIds);
+				}
+			}
+			
+			# Loop through each event
 			foreach ($data as $key => $event) {
-				$provider = $event['provider'];
-				$organisationIdsByProvider[$provider][] = $event['organisation'];
+				$providerId = $event['provider'];
+				$organisationId = $event['organisation'];
+				
+				# Remove events of organisations who want their events switched off
+				if (empty ($organisationDetails[$providerId][$organisationId])) {
+					unset ($data[$key]);
+					continue;
+				}
+				
+				# Inject details about the organisation (which have been retrieved by the provider API) into the event data
+				$data[$key]['organisationName']					= $organisationDetails[$providerId][$organisationId]['organisationName'];
+				$data[$key]['organisationNameUnabbreviated']	= $organisationDetails[$providerId][$organisationId]['organisationNameUnabbreviated'];
+				$data[$key]['baseUrl']							= $organisationDetails[$providerId][$organisationId]['baseUrl'];
+				$data[$key]['profileBaseUrl']					= $organisationDetails[$providerId][$organisationId]['profileBaseUrl'];
 			}
-			foreach ($organisationIdsByProvider as $providerId => $organisationIds) {
-				$organisationIds = array_unique ($organisationIds);
-				$organisationDetails[$providerId] = $this->providerApi->getOrganisationDetails ($providerId, $organisationIds);
-			}
-		}
-		
-		# Loop through each event
-		foreach ($data as $key => $event) {
-			$providerId = $event['provider'];
-			$organisationId = $event['organisation'];
-			
-			# Remove events of organisations who want their events switched off
-			if (empty ($organisationDetails[$providerId][$organisationId])) {
-				unset ($data[$key]);
-				continue;
-			}
-			
-			# Inject details about the organisation (which have been retrieved by the provider API) into the event data
-			$data[$key]['organisationName']					= $organisationDetails[$providerId][$organisationId]['organisationName'];
-			$data[$key]['organisationNameUnabbreviated']	= $organisationDetails[$providerId][$organisationId]['organisationNameUnabbreviated'];
-			$data[$key]['baseUrl']							= $organisationDetails[$providerId][$organisationId]['baseUrl'];
-			$data[$key]['profileBaseUrl']					= $organisationDetails[$providerId][$organisationId]['profileBaseUrl'];
 		}
 		
 		# Flatten for a single event
@@ -1394,11 +1453,12 @@ class eventsPortal extends frontControllerApplication
 		}
 		
 		# Build the HTML
+		$name = htmlspecialchars ($name);
 		$html .= "
 		<div id=\"event\" class=\"graybox clearfix\">
 			<div class=\"title\">
 				<h2>" . htmlspecialchars ($event['eventName']) . "</h2>
-				<p class=\"runby\"><a href=\"{$event['profileBaseUrl']}/\">" . htmlspecialchars ($name) . "</a></p>
+				<p class=\"runby\">" . ($this->settings['organisationsMode'] ? "<a href=\"{$event['profileBaseUrl']}/\">{$name}</a>" : $name) . "</p>
 				" . image::imgTag (image::fnmatchImage ($event['eventId'], $this->baseUrl . '/images/'), 'Event image', 'right') . "
 				<p class=\"when\">{$event['datetime']}</p>
 				<p class=\"where\">" . htmlspecialchars ($event['locationName']) . "</p>
