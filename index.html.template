@@ -1,0 +1,19 @@
+<?php
+
+# Define the settings
+$settings = array (
+	
+	# Database credentials
+	'hostname' => 'localhost',
+	'username' => 'the_username',
+	'password' => 'the_password',
+	
+	# Whether to enable organisations mode (requires providers infrastructure if true)
+	'organisationsMode' => false,
+);
+
+# Run the application with the specified settings
+require_once ('eventsPortal.php');
+new eventsPortal ($settings);
+
+?>

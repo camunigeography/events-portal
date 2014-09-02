@@ -1,0 +1,42 @@
+# Events portal Apache directives
+
+# Load using:
+#	# Events portal
+#	Include /path/to/events-portal/.httpd.conf.extract
+#	Use MacroEventsPortal /events /path/to/events-portal "/path/to/site/:/path/to/events-portal/:/path/to/php/libraries/"
+
+
+<Macro MacroEventsPortal $baseUrl $description $includePath>
+	
+	# Include path
+	<LocationMatch $baseUrl>
+		php_value include_path "$includePath"
+	</LocationMatch>
+	
+	# Front controller application support
+	Use MacroFrontControllerApplication "$baseUrl/" "$description"
+	
+	# Application routing
+	RewriteRule ^$baseUrl/listings/$ $baseUrl/index.html?action=eventlistings [L]
+	RewriteRule ^$baseUrl$ $baseUrl/ [R]
+	RewriteRule ^$baseUrl/feed.html$ $baseUrl/index.html?action=eventsfeedpage [L]
+	RewriteRule ^$baseUrl/([^/]+)/feed.html$ $baseUrl/index.html?action=eventsfeedpage [L]
+	RewriteRule ^$baseUrl/feed(|unstyled).(js|xml)$ $baseUrl/index.html?action=eventsfeed&type=$2&style=$1 [L]
+	RewriteRule ^$baseUrl/([^/]+)/feed(|unstyled).(js|xml)$ $baseUrl/index.html?action=eventsfeed&type=$3&category=$1&style=$2 [L]
+	RewriteRule ^$baseUrl/add.html$ $baseUrl/index.html?action=addevents [L]
+	RewriteRule ^$baseUrl/(logo|logosmall).png$ - [L]
+	RewriteRule ^$baseUrl/(search)/$ $baseUrl/index.html?action=$1 [L]
+	RewriteRule ^$baseUrl/(search)$ $baseUrl/$1/ [R]
+	RewriteRule ^$baseUrl/([^/]+)/$ $baseUrl/index.html?action=home&item=$1 [L]
+	RewriteRule ^$baseUrl/([^/]+)$ $baseUrl/$1/ [R]
+	RewriteRule ^$baseUrl/([0-9]+)/([a-z0-9-]+)/$ $baseUrl/index.html?action=showevent&item=$1&urlslug=$2 [L]
+	RewriteRule ^$baseUrl/([0-9]+)/([a-z0-9-]+)$ $baseUrl/$1/$2/ [R]
+	RewriteRule ^$baseUrl/([0-9]+)/([a-z0-9-]+)/(edit|clone|delete).html$ $baseUrl/index.html?action=$3event&item=$1&urlslug=$2 [L]
+	
+	# Export formats
+	<LocationMatch "$baseUrl/(.*)feed(|unstyled)\.(js|xml)$">
+		php_admin_value auto_prepend_file none
+		php_admin_value auto_append_file none
+	</LocationMatch>
+	
+</Macro>
