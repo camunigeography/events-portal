@@ -1,7 +1,7 @@
 <?php
 
 # Online event listing system
-# Version 1.0.4
+# Version 1.0.5
 # 
 # Licence: GPL
 # (c) Martin Lucas-Smith, Cambridge University Students' Union
@@ -886,9 +886,11 @@ class eventsPortal extends frontControllerApplication
 		$dataBindingAttributes = array (
 			'eventName' => array ('disallow' => array ("^([-A-Z[:space:]\*\"\']+)$" => 'In the title, please type out non-acronyms in normal sentence case rather than in ALL CAPS'), ),	// This regexp is not foolproof but will catch most
 			'locationName' => array ('heading' => array ('3' => 'Where and when?'), ),
+			/*
 			'locationLongitude' => array ('type' => 'hidden', 'values' => array ('locationLongitude' => 0), ),
 			'locationLatitude' => array ('type' => 'hidden', 'values' => array ('locationLatitude' => 0), ),
 			'recurrence' => array ('editable' => false, 'default' => 'Just this day/time', ),
+			*/
 			'webpageUrl' => array ('type' => 'input', 'regexpi' => '(http|https)://'),
 			'facebookUrl' => array ('regexpi' => '(http|https)://'),
 			'description' => array ('cols' => 60, 'rows' => 4, ),
@@ -905,7 +907,9 @@ class eventsPortal extends frontControllerApplication
 			'database' => $this->settings['database'],
 			'table' => $this->settings['table'],
 			'data' => ($data ? $data : array ()),
-			'exclude' => array ('eventId', 'urlSlug', 'provider', 'organisation', 'user', 'lastUpdated', 'submissionTime', 'adminBan', 'deleted'),
+			#!# visible is a misfeature
+			#!# recurrence,locationLongitude,locationLatitude all not yet supported - need to be removed from database structure until they are
+			'exclude' => array ('eventId', 'urlSlug', 'provider', 'organisation', 'user', 'lastUpdated', 'submissionTime', 'adminBan', 'deleted', 'visible', 'recurrence', 'locationLongitude', 'locationLatitude', 'endDate', ),
 			'attributes' => $dataBindingAttributes,
 			#!# Need to reorder fields in database table
 			'ordering' => array ('eventName', 'description', "eventType__JOIN__{$this->settings['database']}__types__reserved", 'locationName', 'startDate', 'startTime', 'endDate', 'endTime', 'contactInfo', 'eligibility', 'cost', 'webpageUrl', 'facebookUrl', 'picture', ),
@@ -917,8 +921,8 @@ class eventsPortal extends frontControllerApplication
 			
 			# Compile the start/end date/time
 			$startDate = (int) str_replace ('-', '', $unfinalisedData['startDate']);
-			$endDate = (int) str_replace ('-', '', $unfinalisedData['endDate']);
 			$startTime = (int) str_replace (':', '', $unfinalisedData['startTime']);
+			$endDate = $startDate;	// Multi-day support not currently enabled
 			$endTime = (int) str_replace (':', '', $unfinalisedData['endTime']);
 			
 			# If there is an end date, and days are different, ensure the dates are in order
@@ -955,14 +959,16 @@ class eventsPortal extends frontControllerApplication
 			// 'adminBan',	// No need to add this
 		);
 		
+		/*
 		# Flatten hierarchical data
 		$result['locationLongitude'] = $result['locationLongitude']['locationLongitude'];
 		$result['locationLatitude'] = $result['locationLatitude']['locationLatitude'];
+		*/
 		
 		# Ensure MySQL compatibility with NULL values
 		if (!$result['startTime']) {$result['startTime'] = NULL;}
 		if (!$result['endTime']) {$result['endTime'] = NULL;}
-		if (!$result['endDate']) {$result['endDate'] = NULL;}
+		$result['endDate'] = $result['startDate'];
 		//if (!$result['deleted']) {$result['deleted'] = NULL;}
 		
 		# Discard the image, first caching its name
@@ -995,8 +1001,10 @@ class eventsPortal extends frontControllerApplication
 			return false;
 		}
 		
+		/*
 		# Insert the recurrence data
 		#!# Recurrence data insert here
+		*/
 		
 		# Get the ID of the inserted event and compute the URL of it online
 		$eventId = ($eventId ? $eventId : $this->databaseConnection->getLatestId ());
@@ -1019,10 +1027,8 @@ class eventsPortal extends frontControllerApplication
 		}
 		
 		# Take the user to the event or create a link in case direct redirection fails
-		if ($result['visible'] == 'Yes') {
-			application::sendHeader (302, $url);
-		}
-		$html .= "\n<p>The event has been successfully " . ($action == 'edit' ? 'updated' : 'added') . '.' . ($result['visible'] == 'Yes' ? " <a href=\"{$location}\">View it now.</a>" : ' However, the event is set not to be visible so is not shown.') . '</p>';
+		application::sendHeader (302, $url);
+		$html .= "\n<p>The event has been successfully " . ($action == 'edit' ? 'updated' : 'added') . ". <a href=\"{$location}\">View it now.</a></p>";
 		
 		# Show the HTML
 		echo $html;
