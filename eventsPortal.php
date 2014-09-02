@@ -1135,7 +1135,7 @@ class eventsPortal extends frontControllerApplication
 		if (!$organisation) {
 			$html .= "\n<h2>" . ($eventType ? ucfirst ($eventTypes[$eventType]) . ' events' : 'All events') . '</h2>';
 			if (!$eventType) {
-				$html .= "\n<p>{$this->settings['welcomeTextHtml']} <a href=\"{$this->baseUrl}/add.html\">Add your event.</a>.</p>";
+				$html .= "\n<p>{$this->settings['welcomeTextHtml']} <a href=\"{$this->baseUrl}/add.html\">Add your event.</a></p>";
 			}
 		}
 		
