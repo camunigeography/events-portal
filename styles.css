@@ -1,0 +1,13 @@
+#eventsportal ul.tabs {clear: right;}
+/* #!# Also need embedded equivalent */
+#eventsportal #sidebar h4 {padding: 0; margin: 1em 0 3px 3px; color: #777;}
+#eventsportal #sidebar {float: right;}
+#eventsportal #sidebar ul.actions {float: none;}
+#eventsportal #sidebar ul.eventtypes {margin: 0; padding: 0;}
+#eventsportal #sidebar ul.eventtypes li {list-style: none; border-bottom: 1px solid #eee;}
+#eventsportal #sidebar ul.eventtypes li a {display: block; border-bottom: 0; color: #005bb4; padding-left: 3px;}
+#eventsportal #sidebar ul.eventtypes li a:hover {background-color: #f7f7f7;}
+#eventsportal #sidebar ul.eventtypes li strong {padding-left: 3px;}
+#eventsportal table.eventslist {width: 600px;}
+#eventsportal table.eventslist td.key {width: 110px;}
+#eventsportal h4.eventslist {color: #603; margin-top: 2.4em;}
