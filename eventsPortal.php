@@ -1,7 +1,7 @@
 <?php
 
 # Online event listing system
-# Version 1.0.2
+# Version 1.0.3
 # 
 # Licence: GPL
 # (c) Martin Lucas-Smith, Cambridge University Students' Union
@@ -227,7 +227,7 @@ class eventsPortal extends frontControllerApplication
 			  `contactInfo` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Contact info (if not main organisation details)',
 			  `webpageUrl` text COLLATE utf8_unicode_ci COMMENT 'URL of webpage about the event (if any)',
 			  `facebookUrl` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Facebook URL about the event (if any)',
-			  `eventType__JOIN__eventsportal__types__reserved` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Type of event',
+			  `eventType__JOIN__" . $this->settings['database'] . "__types__reserved` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Type of event',
 			  `adminBan` int(1) DEFAULT NULL COMMENT 'Admin ban for this event',
 			  PRIMARY KEY (`eventId`)
 			) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Events';
