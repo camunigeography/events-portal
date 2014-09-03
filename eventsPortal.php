@@ -776,9 +776,9 @@ class eventsPortal extends frontControllerApplication
 		}
 		
 		# Check that the organisation wants events listings, if that setting exists
-		if (isSet ($organisation['events']) && !$organisation['events']) {
-			#!# Send a 404 header?
-			$html .= "\n<p>The <a href=\"{$organisation['profileBaseUrl']}/update.html?events#events\">settings for your " . htmlspecialchars ($organisation['typeFormatted']) . "</a> currently have event listings switched off. Please <a href=\"{$organisation['profileBaseUrl']}/update.html?events#events\"><strong>update the events setting</strong></a> to enable adding events.</p>";
+		#!# Send a 404 header if not?
+		if (!$this->organisationWantsEventListings ($organisation, $errorHtml)) {
+			$html .= $errorHtml;
 			echo $html;
 			return false;
 		}
@@ -918,6 +918,21 @@ class eventsPortal extends frontControllerApplication
 		
 		# Show the HTML
 		echo $html;
+	}
+	
+	
+	# Function to determine if the organisation wants events listings
+	private function organisationWantsEventListings ($organisation, &$errorHtml = '')
+	{
+		# If the field is not present, no limitation system applies
+		if (!isSet ($organisation['events'])) {return true;}
+		
+		# If events are allowed, return true
+		if ($organisation['events']) {return true;}
+		
+		# Deny access
+		$errorHtml = "\n<p>The <a href=\"{$organisation['profileBaseUrl']}/update.html?events#events\">settings for your " . htmlspecialchars ($organisation['typeFormatted']) . "</a> currently have event listings switched off. Please <a href=\"{$organisation['profileBaseUrl']}/update.html?events#events\"><strong>update the events setting</strong></a> to enable adding events.</p>";
+		return false;
 	}
 	
 	
