@@ -11,3 +11,4 @@
 #eventsportal table.eventslist {width: 600px;}
 #eventsportal table.eventslist td.key {width: 110px;}
 #eventsportal h4.eventslist {color: #603; margin-top: 2.4em;}
+#eventsportal .settings td:first-child {width: 40%;}

@@ -1,7 +1,7 @@
 <?php
 
 # Event portal system
-# Version 1.1.1
+# Version 1.1.2
 # 
 # Licence: GPL
 # (c) Martin Lucas-Smith, Cambridge University Students' Union
@@ -76,9 +76,6 @@ class eventsPortal extends frontControllerApplication
 			
 			# Whether to enable organisations mode, which uses the providers infrastructure
 			'organisationsMode' => true,
-			
-			# Special notice, if required
-			'specialNoticeHtml' => false,
 		);
 		
 		# Return the defaults
@@ -219,6 +216,7 @@ class eventsPortal extends frontControllerApplication
 			  `applicationName` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'Events' COMMENT 'Brand name of the application',
 			  `applicationNameExtended` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'Events' COMMENT 'Brand name of the application (extended)',
 			  `welcomeTextHtml` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '<strong>Welcome</strong> to our event listings service!' COMMENT 'HTML fragment for welcome text',
+			  `specialNoticeHtml` text COLLATE utf8_unicode_ci COMMENT 'Special notice (as HTML), if required',
 			  `whereHappening` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '%s lists events taking place.' COMMENT 'Phrase for where the events are happening (%s becomes application name)',
 			  `feedDescriptionDefault` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'Events' COMMENT 'Feed description (default)',
 			  `eligibilityOptions` text COLLATE utf8_unicode_ci NOT NULL COMMENT 'Eligibility options (one per line; first will be the default)',
@@ -264,6 +262,21 @@ class eventsPortal extends frontControllerApplication
 		# Load required libraries
 		require_once ('image.php');
 		
+	}
+	
+	
+	# Settings wrapper
+	public function settings ($dataBindingSettingsOverrides = array ())
+	{
+		# Define overrides
+		$dataBindingSettingsOverrides = array (
+			'attributes' => array (
+				'specialNoticeHtml' => array ('type' => 'textarea', 'cols' => 60, 'rows' => 8, ),
+			),
+		);
+		
+		# Run the settings page
+		parent::settings ($dataBindingSettingsOverrides);
 	}
 	
 	
