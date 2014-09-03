@@ -1023,6 +1023,8 @@ if ($this->settings['organisationsMode']) {
 			'description' => array ('cols' => 50, 'rows' => 4, ),
 			"eventType__JOIN__{$this->settings['database']}__types__reserved" => array ('type' => 'select', 'values' => $this->getEventTypes (), ),
 			'startDate' => array ('picker' => true, 'default' => ($data ? $data['startDate'] : false), ),
+			'startTime' => array ('description' => 'E.g.&nbsp;6pm', ),
+			'endTime' => array ('description' => 'E.g.&nbsp;9.30pm', ),
 			#!# otherDates is temp while repeatability not implemented
 			'otherDates' => array ('description' => 'We will add these in for you once you have submitted the event.', ),
 			//'endDate' => array ('picker' => true, ),
