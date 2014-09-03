@@ -826,83 +826,8 @@ class eventsPortal extends frontControllerApplication
 			return;
 		}
 		
-		# Determine the picture message
-		$pictureAlready = ($data && file_exists ($this->settings['eventsImageStoreRoot'] . $data['eventId'] . '.' . $this->settings['imageOutputFormat']));
-		$pictureMessage = 'You can upload an image if you wish. It will be automatically resized where necessary.';
-		if (($action != 'add') && $pictureAlready) {
-			$pictureMessage = 'You can upload a different image if you wish; otherwise the original image will be used. Any new image will be automatically resized where necessary.';
-		}
-		
-		# Event form, binded against the database structure
-		require_once ('ultimateForm.php');
-		$form = new form (array (
-			'developmentEnvironment' => ini_get ('display_errors'),
-			'formCompleteText' => false,
-			'div' => 'graybox lines',
-			'databaseConnection' => $this->databaseConnection,
-			'displayRestrictions' => false,
-			'autofocus' => true,
-		));
-		$dataBindingAttributes = array (
-			'eventName' => array ('disallow' => array ("^([-A-Z[:space:]\*\"\']+)$" => 'In the title, please type out non-acronyms in normal sentence case rather than in ALL CAPS'), ),	// This regexp is not foolproof but will catch most
-			'locationName' => array ('heading' => array ('3' => 'Where and when?'), ),
-			/*
-			'locationLongitude' => array ('type' => 'hidden', 'values' => array ('locationLongitude' => 0), ),
-			'locationLatitude' => array ('type' => 'hidden', 'values' => array ('locationLatitude' => 0), ),
-			'recurrence' => array ('editable' => false, 'default' => 'Just this day/time', ),
-			*/
-			'webpageUrl' => array ('type' => 'input', 'regexpi' => '(http|https)://', 'placeholder' => 'http://...', ),
-			'facebookUrl' => array ('regexpi' => '(http|https)://', 'placeholder' => 'http://...', ),
-			'description' => array ('cols' => 60, 'rows' => 4, ),
-			"eventType__JOIN__{$this->settings['database']}__types__reserved" => array ('type' => 'select', 'values' => $this->getEventTypes (), ),
-			'startDate' => array ('picker' => true, 'default' => ($data ? $data['startDate'] : date ('Y') . '0000'), ),
-			//'endDate' => array ('picker' => true, ),
-			'contactInfo' => array ('heading' => array ('3' => 'Who people can contact for more details'), 'title' => 'Contact' . ($organisation['typeFormatted'] ? ' (if not main ' . $organisation['typeFormatted'] . ' details)' : '') . ', e.g. e-mail address'),
-			'eligibility' => array ('heading' => array ('3' => 'Other details'), 'type' => 'select', 'values' => $this->settings['eligibilityOptions']),
-			'picture' => array ('heading' => array ('3' => 'Image/picture/logo (if any)', 'p' => $pictureMessage, ), 'type' => 'upload', 'directory' => $imageDirectory = $this->settings['eventsImageStoreRoot'], 'flatten' => true, ),
-		);
-		if (!$data) {
-			$dataBindingAttributes['eligibility']['default'] = $this->settings['eligibilityOptions'][0];
-		}
-		$form->dataBinding (array (
-			'database' => $this->settings['database'],
-			'table' => $this->settings['table'],
-			'data' => ($data ? $data : array ()),
-			#!# recurrence,locationLongitude,locationLatitude all not yet supported - need to be removed from database structure until they are
-			'exclude' => array ('eventId', 'urlSlug', 'provider', 'organisation', 'user', 'lastUpdated', 'submissionTime', 'adminBan', 'deleted', 'recurrence', 'locationLongitude', 'locationLatitude', 'endDate', ),
-			'attributes' => $dataBindingAttributes,
-			#!# Need to reorder fields in database table
-			'ordering' => array ('eventName', 'description', "eventType__JOIN__{$this->settings['database']}__types__reserved", 'locationName', 'startDate', 'startTime', 'endDate', 'endTime', 'contactInfo', 'eligibility', 'cost', 'webpageUrl', 'facebookUrl', 'picture', ),
-		));
-		
-		# Add sanity-checking constraints
-		#!# This could be generalised and moved into the form somehow, or to timedate.php
-		if ($unfinalisedData = $form->getUnfinalisedData ()) {
-			
-			# Compile the start/end date/time
-			$startDate = (int) str_replace ('-', '', $unfinalisedData['startDate']);
-			$startTime = (int) str_replace (':', '', $unfinalisedData['startTime']);
-			$endDate = $startDate;	// Multi-day support not currently enabled
-			$endTime = (int) str_replace (':', '', $unfinalisedData['endTime']);
-			
-			# If there is an end date, and days are different, ensure the dates are in order
-			if ($endDate && ($endDate < $startDate)) {
-				$form->registerProblem ('dateMismatch', 'The end date cannot be before the start date.');
-			}
-			
-			# If the days are the same, ensure the times are in order
-			if (($startDate == $endDate) && $endTime && ($endTime <= $startTime)) {
-				$form->registerProblem ('timeMismatch', 'The end time must be after the start time.');
-			}
-			
-			# If an end time is present, ensure there is an end date
-			if ($endTime && !$endDate) {
-				$form->registerProblem ('endDateMissing', "If entering an end time, please enter an end date also.");
-			}
-		}
-		
-		# Process the form or end
-		if (!$result = $form->process ($html)) {
+		# Show the event form or end
+		if (!$result = $this->eventForm ($action, $data, $organisation, $html)) {
 			echo $html;
 			return false;
 		}
@@ -1063,6 +988,90 @@ if ($this->settings['organisationsMode']) {
 		
 		# Return the HTML
 		return $html;
+	}
+	
+	
+	# Editing form
+	private function eventForm ($action, $data, $organisation, &$html)
+	{
+		# Determine the picture message
+		$pictureAlready = ($data && file_exists ($this->settings['eventsImageStoreRoot'] . $data['eventId'] . '.' . $this->settings['imageOutputFormat']));
+		$pictureMessage = 'You can upload an image if you wish. It will be automatically resized where necessary.';
+		if (($action != 'add') && $pictureAlready) {
+			$pictureMessage = 'You can upload a different image if you wish; otherwise the original image will be used. Any new image will be automatically resized where necessary.';
+		}
+		
+		# Event form, binded against the database structure
+		$form = new form (array (
+			'formCompleteText' => false,
+			'div' => 'graybox lines',
+			'databaseConnection' => $this->databaseConnection,
+			'displayRestrictions' => false,
+			'autofocus' => true,
+		));
+		$dataBindingAttributes = array (
+			'eventName' => array ('disallow' => array ("^([-A-Z[:space:]\*\"\']+)$" => 'In the title, please type out non-acronyms in normal sentence case rather than in ALL CAPS'), ),	// This regexp is not foolproof but will catch most
+			'locationName' => array ('heading' => array ('3' => 'Where and when?'), ),
+			/*
+			'locationLongitude' => array ('type' => 'hidden', 'values' => array ('locationLongitude' => 0), ),
+			'locationLatitude' => array ('type' => 'hidden', 'values' => array ('locationLatitude' => 0), ),
+			'recurrence' => array ('editable' => false, 'default' => 'Just this day/time', ),
+			*/
+			'webpageUrl' => array ('type' => 'input', 'regexpi' => '(http|https)://', 'placeholder' => 'http://...', ),
+			'facebookUrl' => array ('regexpi' => '(http|https)://', 'placeholder' => 'http://...', ),
+			'description' => array ('cols' => 50, 'rows' => 4, ),
+			"eventType__JOIN__{$this->settings['database']}__types__reserved" => array ('type' => 'select', 'values' => $this->getEventTypes (), ),
+			'startDate' => array ('picker' => true, 'default' => ($data ? $data['startDate'] : false), ),
+			//'endDate' => array ('picker' => true, ),
+			'contactInfo' => array ('heading' => array ('3' => 'Who people can contact for more details'), 'title' => 'Contact' . ($organisation['typeFormatted'] ? ' (if not main ' . $organisation['typeFormatted'] . ' details)' : '') . ', e.g. e-mail address'),
+			'eligibility' => array ('heading' => array ('3' => 'Other details'), 'type' => 'select', 'values' => $this->settings['eligibilityOptions']),
+			'picture' => array ('heading' => array ('3' => 'Image/picture/logo (if any)', 'p' => $pictureMessage, ), 'type' => 'upload', 'directory' => $imageDirectory = $this->settings['eventsImageStoreRoot'], 'flatten' => true, ),
+		);
+		if (!$data) {
+			$dataBindingAttributes['eligibility']['default'] = $this->settings['eligibilityOptions'][0];
+		}
+		$form->dataBinding (array (
+			'database' => $this->settings['database'],
+			'table' => $this->settings['table'],
+			'data' => ($data ? $data : array ()),
+			#!# recurrence,locationLongitude,locationLatitude all not yet supported - need to be removed from database structure until they are
+			'exclude' => array ('eventId', 'urlSlug', 'provider', 'organisation', 'user', 'lastUpdated', 'submissionTime', 'adminBan', 'deleted', 'recurrence', 'locationLongitude', 'locationLatitude', 'endDate', ),
+			'attributes' => $dataBindingAttributes,
+			#!# Need to reorder fields in database table
+			'ordering' => array ('eventName', 'description', "eventType__JOIN__{$this->settings['database']}__types__reserved", 'locationName', 'startDate', 'startTime', 'endDate', 'endTime', 'contactInfo', 'eligibility', 'cost', 'webpageUrl', 'facebookUrl', 'picture', ),
+		));
+		
+		# Add sanity-checking constraints
+		#!# This could be generalised and moved into the form somehow, or to timedate.php
+		if ($unfinalisedData = $form->getUnfinalisedData ()) {
+			
+			# Compile the start/end date/time
+			$startDate = (int) str_replace ('-', '', $unfinalisedData['startDate']);
+			$startTime = (int) str_replace (':', '', $unfinalisedData['startTime']);
+			$endDate = $startDate;	// Multi-day support not currently enabled
+			$endTime = (int) str_replace (':', '', $unfinalisedData['endTime']);
+			
+			# If there is an end date, and days are different, ensure the dates are in order
+			if ($endDate && ($endDate < $startDate)) {
+				$form->registerProblem ('dateMismatch', 'The end date cannot be before the start date.');
+			}
+			
+			# If the days are the same, ensure the times are in order
+			if (($startDate == $endDate) && $endTime && ($endTime <= $startTime)) {
+				$form->registerProblem ('timeMismatch', 'The end time must be after the start time.');
+			}
+			
+			# If an end time is present, ensure there is an end date
+			if ($endTime && !$endDate) {
+				$form->registerProblem ('endDateMissing', "If entering an end time, please enter an end date also.");
+			}
+		}
+		
+		# Process the form
+		$result = $form->process ($html);
+		
+		# Return the result
+		return $result;
 	}
 	
 	
