@@ -715,7 +715,7 @@ class eventsPortal extends frontControllerApplication
 		# If not adding, get the event data
 		$data = array ();
 		if ($action != 'add') {
-			if (!$data = ($this->getEvents (false, false, $eventId, false, $forthcomingOnly = (!$eventId)))) {
+			if (!$data = ($this->getEvents (false, false, $eventId, false, false))) {
 				#!# Throw 404
 				$html .= "\n<p>There is no such event; perhaps you followed an incorrect link or mistyped the URL?</p>";
 				echo $html;
@@ -771,9 +771,9 @@ class eventsPortal extends frontControllerApplication
 				$html .= "
 				<ul id=\"eventformeditactions\" class=\"actions noprint\">
 					<li><h4>" . ($this->userIsAdministrator ? 'Administrator' : 'Manager') . " options:</h4></li>
-					<li><a href=\"{$this->eventsBaseUrl}/{$eventId}/{$data['urlSlug']}/edit.html\"><img src=\"/images/icons/pencil.png\" alt=\"*\" /> Edit event details</a></li>
-					<li class=\"spaced\"><a href=\"{$this->eventsBaseUrl}/{$eventId}/{$data['urlSlug']}/delete.html\"><img src=\"/images/icons/cross.png\" alt=\"*\" /> Delete the event</a></li>
-					<li><a href=\"{$this->eventsBaseUrl}/{$eventId}/{$data['urlSlug']}/clone.html\"><img src=\"/images/icons/application_double.png\" class=\"icon\" alt=\"*\" /> Clone to a similar event</a></li>
+					<li><a href=\"{$this->eventsBaseUrl}/{$data['eventId']}/{$data['urlSlug']}/edit.html\"><img src=\"/images/icons/pencil.png\" alt=\"*\" /> Edit event details</a></li>
+					<li class=\"spaced\"><a href=\"{$this->eventsBaseUrl}/{$data['eventId']}/{$data['urlSlug']}/delete.html\"><img src=\"/images/icons/cross.png\" alt=\"*\" /> Delete the event</a></li>
+					<li><a href=\"{$this->eventsBaseUrl}/{$data['eventId']}/{$data['urlSlug']}/clone.html\"><img src=\"/images/icons/application_double.png\" class=\"icon\" alt=\"*\" /> Clone to a similar event</a></li>
 					" . ($organisation['typeFormatted'] ? "<li class=\"spaced\"><a href=\"{$organisation['eventsBaseUrl']}/add.html\"><img src=\"/images/icons/add.png\" class=\"icon\" alt=\"*\" /> Add a new event</a></li>" : '') . "
 					" . ($organisation['typeFormatted'] ? "<li><a href=\"{$organisation['profileBaseUrl']}/#events\"><img src=\"/images/icons/application_view_list.png\" class=\"icon\" alt=\"*\" /> Return to {$organisation['typeFormatted']}'s events list</a></li>" : '') . "
 					<li><a href=\"{$this->eventsBaseUrl}/\"><img src=\"/images/icons/application_view_list.png\" class=\"icon\" alt=\"*\" /> Return to full events list</a></li>
