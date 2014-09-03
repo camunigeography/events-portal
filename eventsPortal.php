@@ -829,49 +829,10 @@ class eventsPortal extends frontControllerApplication
 			return true;
 		}
 		
-		# If deleting, confirm
+		# Event deletion
 		if ($action == 'delete') {
-			
-			# Deletion form
-			require_once ('ultimateForm.php');
-			$form = new form (array (
-				'developmentEnvironment' => ini_get ('display_errors'),
-				'formCompleteText' => false,
-				'databaseConnection' => $this->databaseConnection,
-				'displayRestrictions' => false,
-			));
-			$form->select (array (
-				'name' => 'confirm',
-				'title' => 'Are you sure you want to delete the event below?',
-				'values' => array ('', $yes = 'Yes, delete this event', 'No'),
-				'required' => true,
-				'nullText' => '',
-			));
-			$result = $form->process ($html);
-			if (!$result) {$html .= $this->eventHtml ($data, $organisation['id'], $organisation['organisationName']);}
-			
-			if ($result) {
-				# Check status
-				if ($result['confirm'] != $yes) {
-					$html .= "\n<p>The <a href=\"{$this->baseUrl}/{$eventId}/{$data['urlSlug']}/\">event</a> has <strong>not</strong> been deleted.</p>";
-				} else {
-					
-					# Delete the event
-					if (!$this->databaseConnection->update ($this->settings['database'], 'events', array ('deleted' => 1), array ('eventId' => $eventId))) {
-						$html .= "\n<p>There was a technical problem deleting the event. This has been reported to the Webmaster.</p>";
-						#!# Report to webmaster
-					} else {
-						
-						# Confirm success
-						$html .= "\n<p>The event has now been deleted.</p>\n<p>You may wish to <a href=\"{$organisation['eventsBaseUrl']}/add.html\">add a new event</a> or <a href=\"{$organisation['eventsBaseUrl']}/\">return to the {$organisation['typeFormatted']}'s main events listing</a>.</p>";
-					}
-				}
-			}
-			
-			# Show the HTML
+			$html  = $this->manipulateDelete ($data, $organisation);
 			echo $html;
-			
-			# End here
 			return;
 		}
 		
@@ -1041,6 +1002,53 @@ class eventsPortal extends frontControllerApplication
 		
 		# Show the HTML
 		echo $html;
+	}
+	
+	
+	# Function to delete an event
+	private function manipulateDelete ($data, $organisation)
+	{
+		# Start the HTML
+		$html  = '';
+		
+		# Deletion form
+		$form = new form (array (
+			'formCompleteText' => false,
+			'databaseConnection' => $this->databaseConnection,
+			'displayRestrictions' => false,
+		));
+		$form->heading (3, 'Confirm deletion');
+		$form->select (array (
+			'name' => 'confirm',
+			'title' => 'Are you sure you want to delete the event below?',
+			'values' => array ('', $yes = 'Yes, delete this event', 'No'),
+			'required' => true,
+			'nullText' => '',
+		));
+		$result = $form->process ($html);
+		if (!$result) {$html .= $this->eventHtml ($data, $organisation['id'], $organisation['organisationName']);}
+		
+		if ($result) {
+			# Check status
+			if ($result['confirm'] != $yes) {
+				$html .= "\n<p>The <a href=\"{$this->baseUrl}/{$data['eventId']}/{$data['urlSlug']}/\">event</a> has <strong>not</strong> been deleted.</p>";
+			} else {
+				
+				# Delete the event
+				if (!$this->databaseConnection->update ($this->settings['database'], 'events', array ('deleted' => 1), array ('eventId' => $data['eventId']))) {
+					$html .= "\n<p>There was a technical problem deleting the event. This has been reported to the Webmaster.</p>";
+					#!# Report to webmaster
+				} else {
+					
+					# Confirm success
+#!# $organisation['typeFormatted'] is empty
+					$html .= "\n<p>The event has now been deleted.</p>\n<p>You may wish to <a href=\"{$organisation['eventsBaseUrl']}/add.html\">add a new event</a> or <a href=\"{$organisation['eventsBaseUrl']}/\">return to the {$organisation['typeFormatted']}'s main events listing</a>.</p>";
+				}
+			}
+		}
+		
+		# Return the HTML
+		return $html;
 	}
 	
 	
