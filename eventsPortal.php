@@ -690,6 +690,11 @@ class eventsPortal extends frontControllerApplication
 		# Start the HTML
 		$html  = '';
 		
+		# Validate action
+		# NB Only 'add' will have the providerId and organisation being supplied; all others must derive provider/organisation from the event details
+		$actions = array ('add', 'show', 'edit', 'delete', 'clone');
+		if (!in_array ($action, $actions)) {return false;}
+		
 		# If not in organisations mode, provide a null object implementation for the provider and organisation
 		if (!$this->settings['organisationsMode']) {
 			$providerId = 'internal';
@@ -703,18 +708,6 @@ class eventsPortal extends frontControllerApplication
 				'eventsBaseUrl' => $this->baseUrl,
 			);
 		}
-		
-		# Determine available actions against database actions
-		$actions = array (
-			'add' => 'insert',		// This is the only one that will have the providerId and organisation being supplied
-			'show' => 'show',		// All these do not have an provider/organisation being supplied, so those must be derived from the event details
-			'edit' => 'update',
-			'delete' => 'delete',
-			'clone' => 'insert',
-		);
-		
-		# Validate action
-		if (!isSet ($actions[$action])) {return false;}
 		
 		# Cache the original event ID for later use
 		$originalEventId = $eventId;
@@ -742,7 +735,7 @@ class eventsPortal extends frontControllerApplication
 				
 				# Validate the organisation and get its details (which will not have entity conversion done); this will be empty if no events are wanted
 				if (!$organisation = $this->providerApi->getOrganisationDetails ($providerId, $organisationId)) {
-				#!# Needs to report there is no such organisation or they have events switched off
+					#!# Needs to report there is no such organisation or they have events switched off
 					return false;
 				}
 			}
@@ -770,20 +763,6 @@ class eventsPortal extends frontControllerApplication
 			$html .= $errorHtml;
 			echo $html;
 			return false;
-		}
-		
-		# Introduce the webform
-		if ($action == 'edit' || $action == 'add' || $action == 'clone') {
-			if ($organisation['typeFormatted']) {
-				$html .= "\n<h{$headingLevel} id=\"sectionheading\">" . ucfirst ($action) . ' an event ' . "for {$organisation['typeFormatted']}: <a href=\"{$organisation['profileBaseUrl']}/\">" . htmlspecialchars ($organisation['organisationName']) . '</a>' . "</h{$headingLevel}>";
-			}
-			#!# This is still being visible after editing
-			#!# /events/<id>/<eventslug>/edit.html gives two 'Cancel editing' buttons, one returning to /<hostapplication>/events/<id>/<eventslug>/ , and the other to /events/<id>/<eventslug>/
-			$html .= "\n\n<ul class=\"actions noprint\">
-					<li>" . ($action == 'edit' ? 'Edit' : 'Add') . " the event details below or:</li>
-					" . ($organisation['typeFormatted'] ? "<li><a href=\"{$organisation['profileBaseUrl']}/" . ($eventId ? "{$eventId}/{$data['urlSlug']}/" : '') . "\"><img src=\"/images/icons/cross.png\" class=\"icon\" alt=\"*\" /> " . ($eventId ? ($action == 'clone' ? 'Cancel cloning' : 'Cancel editing') : 'Cancel and return to main profile page') . "</a></li>" : '') . "
-					<li><a href=\"{$this->eventsBaseUrl}/" . ($eventId ? "{$eventId}/{$data['urlSlug']}/" : '') . "\"><img src=\"/images/icons/cross.png\" class=\"icon\" alt=\"*\" /> " . ($eventId ? ($action == 'clone' ? 'Cancel cloning' : 'Cancel editing') : 'Cancel and return to ' . $this->settings['applicationName']) . "</a></li>
-				</ul>";
 		}
 		
 		# Show edit links if they have rights
@@ -815,6 +794,18 @@ class eventsPortal extends frontControllerApplication
 			echo $html;
 			return;
 		}
+		
+		# Introduce the webform
+		if ($organisation['typeFormatted']) {
+			$html .= "\n<h{$headingLevel} id=\"sectionheading\">" . ucfirst ($action) . ' an event ' . "for {$organisation['typeFormatted']}: <a href=\"{$organisation['profileBaseUrl']}/\">" . htmlspecialchars ($organisation['organisationName']) . '</a>' . "</h{$headingLevel}>";
+		}
+		#!# This is still being visible after editing
+		#!# /events/<id>/<eventslug>/edit.html gives two 'Cancel editing' buttons, one returning to /<hostapplication>/events/<id>/<eventslug>/ , and the other to /events/<id>/<eventslug>/
+		$html .= "\n\n<ul class=\"actions noprint\">
+				<li>" . ($action == 'edit' ? 'Edit' : 'Add') . " the event details below or:</li>
+				" . ($organisation['typeFormatted'] ? "<li><a href=\"{$organisation['profileBaseUrl']}/" . ($eventId ? "{$eventId}/{$data['urlSlug']}/" : '') . "\"><img src=\"/images/icons/cross.png\" class=\"icon\" alt=\"*\" /> " . ($eventId ? ($action == 'clone' ? 'Cancel cloning' : 'Cancel editing') : 'Cancel and return to main profile page') . "</a></li>" : '') . "
+				<li><a href=\"{$this->eventsBaseUrl}/" . ($eventId ? "{$eventId}/{$data['urlSlug']}/" : '') . "\"><img src=\"/images/icons/cross.png\" class=\"icon\" alt=\"*\" /> " . ($eventId ? ($action == 'clone' ? 'Cancel cloning' : 'Cancel editing') : 'Cancel and return to ' . $this->settings['applicationName']) . "</a></li>
+			</ul>";
 		
 		# Show the event form or end
 		if (!$result = $this->eventForm ($action, $data, $organisation, $html)) {
@@ -851,23 +842,21 @@ class eventsPortal extends frontControllerApplication
 		unset ($result['picture']);
 		
 		# Generate the URL slug; note this is deliberately only done during addition to ensure stable URLs; changes require deletion and re-creation of the event
-		if (($action == 'add') || ($action == 'clone')) {
+		if ($action != 'edit') {
 			$result['urlSlug'] = application::createUrlSlug ($result['eventName']);
 		}
 		
 		# Insert the data into the database or report error
-		$do = $actions[$action];
-		$conditions = ($do == 'update' ? array ('eventId' => $eventId) : NULL);
+		$conditions = ($action == 'edit' ? array ('eventId' => $eventId) : NULL);
 		if ($action == 'clone') {
-			$do = 'insert';
 			$eventId = false;
 		}
+		$do = ($action == 'edit' ? 'update' : 'insert');
 		if (!$this->databaseConnection->{$do} ($this->settings['database'], $this->settings['table'], $result, $conditions)) {
 			$descriptions = array (
-				'add' => 'adding the new event',
-				'edit' => 'editing the event',
-				'delete' => 'deleting the event',
-				'clone' => 'creating the new, cloned event',
+				'add'	=> 'adding the new event',
+				'edit'	=> 'editing the event',
+				'clone'	=> 'creating the new, cloned event',
 			);
 			$html .= "\n<p>Apologies - there was a technical problem {$descriptions[$action]}. This problem has been reported to the Webmaster. Please kindly try again later.</p>";
 			echo $html;
