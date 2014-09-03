@@ -726,7 +726,7 @@ class eventsPortal extends frontControllerApplication
 			$providerId = 'internal';
 			$organisation = array (
 				'id' => 'internal',
-				'typeFormatted' => 'organisation',
+				'typeFormatted' => false,
 				'events' => true,
 				'organisationName' => false,
 				'emailVisible' => false,
