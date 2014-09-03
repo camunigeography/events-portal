@@ -190,7 +190,6 @@ class eventsPortal extends frontControllerApplication
 			  `endDate` date DEFAULT NULL COMMENT 'End date',
 			  `recurrence` enum('Just this day/time','Event recurs at the same day/time each week during full term','Event recurs at the same day/time each week during the whole year') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'Just this day/time' COMMENT 'Does the event recur each week?',
 			  `eligibility` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Who can attend?',
-			  `visible` enum('Yes','No') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'Yes' COMMENT 'Make this event visible in listings online?',
 			  `deleted` int(1) DEFAULT NULL COMMENT 'Event has been deleted?',
 			  `user` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Added/updated by user',
 			  `lastUpdated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Event details last updated',
@@ -321,7 +320,7 @@ class eventsPortal extends frontControllerApplication
 		$fieldsRequired = array ('logoLocation', 'organisationName', 'eventsBaseUrl', );
 		
 		# Get a manager's organisations or end
-		#!# Need to change the parameters so that only visible & approved organisations are listed
+		#!# Need to change the parameters so that only approved organisations are listed
 		if (!$organisationsOfUser = $this->providerApi->getOrganisationsOfUser ($this->user, $fieldsRequired)) {
 			$html .= "\n<p>You do not appear to be registered as a manager of any organisation.</p>";
 			$html .= "\n<p id=\"claimform\"><strong>If you think you should be the manager for an organisation's entry</strong>, please use the manager claim form for the relevant area, or add the organisation if it is not listed already, using these links:</p>";
@@ -788,22 +787,13 @@ class eventsPortal extends frontControllerApplication
 			if ($organisation['typeFormatted']) {
 				$html .= "\n<h{$headingLevel} id=\"sectionheading\">" . ucfirst ($action) . ' an event ' . "for {$organisation['typeFormatted']}: <a href=\"{$organisation['profileBaseUrl']}/\">" . htmlspecialchars ($organisation['organisationName']) . '</a>' . "</h{$headingLevel}>";
 			}
-			//if ($data['visible'] == 'Yes') {
-				#!# This is still being visible after editing
-				#!# /events/<id>/<eventslug>/edit.html gives two 'Cancel editing' buttons, one returning to /<hostapplication>/events/<id>/<eventslug>/ , and the other to /events/<id>/<eventslug>/
-				$html .= "\n\n<ul class=\"actions noprint\">
-						<li>" . ($action == 'edit' ? 'Edit' : 'Add') . " the event details below or:</li>
-						" . ($organisation['typeFormatted'] ? "<li><a href=\"{$organisation['profileBaseUrl']}/" . ($eventId ? "{$eventId}/{$data['urlSlug']}/" : '') . "\"><img src=\"/images/icons/cross.png\" class=\"icon\" alt=\"*\" /> " . ($eventId ? ($action == 'clone' ? 'Cancel cloning' : 'Cancel editing') : 'Cancel and return to main profile page') . "</a></li>" : '') . "
-						<li><a href=\"{$this->eventsBaseUrl}/" . ($eventId ? "{$eventId}/{$data['urlSlug']}/" : '') . "\"><img src=\"/images/icons/cross.png\" class=\"icon\" alt=\"*\" /> " . ($eventId ? ($action == 'clone' ? 'Cancel cloning' : 'Cancel editing') : 'Cancel and return to ' . $this->settings['applicationName']) . "</a></li>
-					</ul>";
-			//}
-		}
-		
-		# Show non-visibility message
-		if ($action != 'add') {
-			if ($data['visible'] == 'No') {
-				$html .= "\n<p class=\"comment\"><em><strong>Note</strong>: The event below is currently not visible in listings.</em></p>";
-			}
+			#!# This is still being visible after editing
+			#!# /events/<id>/<eventslug>/edit.html gives two 'Cancel editing' buttons, one returning to /<hostapplication>/events/<id>/<eventslug>/ , and the other to /events/<id>/<eventslug>/
+			$html .= "\n\n<ul class=\"actions noprint\">
+					<li>" . ($action == 'edit' ? 'Edit' : 'Add') . " the event details below or:</li>
+					" . ($organisation['typeFormatted'] ? "<li><a href=\"{$organisation['profileBaseUrl']}/" . ($eventId ? "{$eventId}/{$data['urlSlug']}/" : '') . "\"><img src=\"/images/icons/cross.png\" class=\"icon\" alt=\"*\" /> " . ($eventId ? ($action == 'clone' ? 'Cancel cloning' : 'Cancel editing') : 'Cancel and return to main profile page') . "</a></li>" : '') . "
+					<li><a href=\"{$this->eventsBaseUrl}/" . ($eventId ? "{$eventId}/{$data['urlSlug']}/" : '') . "\"><img src=\"/images/icons/cross.png\" class=\"icon\" alt=\"*\" /> " . ($eventId ? ($action == 'clone' ? 'Cancel cloning' : 'Cancel editing') : 'Cancel and return to ' . $this->settings['applicationName']) . "</a></li>
+				</ul>";
 		}
 		
 		# Show edit links if they have rights
@@ -927,9 +917,8 @@ class eventsPortal extends frontControllerApplication
 			'database' => $this->settings['database'],
 			'table' => $this->settings['table'],
 			'data' => ($data ? $data : array ()),
-			#!# visible is a misfeature
 			#!# recurrence,locationLongitude,locationLatitude all not yet supported - need to be removed from database structure until they are
-			'exclude' => array ('eventId', 'urlSlug', 'provider', 'organisation', 'user', 'lastUpdated', 'submissionTime', 'adminBan', 'deleted', 'visible', 'recurrence', 'locationLongitude', 'locationLatitude', 'endDate', ),
+			'exclude' => array ('eventId', 'urlSlug', 'provider', 'organisation', 'user', 'lastUpdated', 'submissionTime', 'adminBan', 'deleted', 'recurrence', 'locationLongitude', 'locationLatitude', 'endDate', ),
 			'attributes' => $dataBindingAttributes,
 			#!# Need to reorder fields in database table
 			'ordering' => array ('eventName', 'description', "eventType__JOIN__{$this->settings['database']}__types__reserved", 'locationName', 'startDate', 'startTime', 'endDate', 'endTime', 'contactInfo', 'eligibility', 'cost', 'webpageUrl', 'facebookUrl', 'picture', ),
@@ -1301,7 +1290,6 @@ class eventsPortal extends frontControllerApplication
 			/* Joins */
 				eventType__JOIN__{$this->settings['database']}__types__reserved = {$this->settings['database']}.types.eventTypeId"
 			/* General */
-				. ($allowHidden ? '' : " AND visible = 'Yes'")
 				. ($ensureNotDeleted ? " AND (events.deleted = '' OR events.deleted IS NULL)" : '')
 				. ($eventId ? " AND eventId = '" . addslashes ($eventId) . "'" : '')
 				. ($forthcomingOnly ? " AND CAST(NOW() as DATE) <= startDate " : '')
