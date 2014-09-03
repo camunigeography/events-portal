@@ -1,7 +1,7 @@
 <?php
 
 # Event portal system
-# Version 1.1.0
+# Version 1.1.1
 # 
 # Licence: GPL
 # (c) Martin Lucas-Smith, Cambridge University Students' Union
@@ -143,6 +143,12 @@ class eventsPortal extends frontControllerApplication
 				'description' => 'Events feed',
 				'usetab' => NULL,
 				'export' => true,
+			),
+			'search' => array (
+				'description' => 'Search',
+				'url' => 'search/',
+				// 'tab' => 'Search',
+				'icon' => 'magnifier',
 			),
 		);
 		
@@ -1496,6 +1502,14 @@ if ($this->settings['organisationsMode']) {
 		
 		# Return the HTML
 		return $html;
+	}
+	
+	
+	# Search facility
+	public function search ()
+	{
+		#!# Not yet implemented
+		echo $html = "\n<p><em>Apologies; the search facility is not yet available.</em></p>";
 	}
 	
 	
