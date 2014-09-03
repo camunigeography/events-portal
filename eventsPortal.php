@@ -722,8 +722,7 @@ class eventsPortal extends frontControllerApplication
 		# If not adding, get the event data
 		$data = array ();
 		if ($action != 'add') {
-			if (!$data = ($this->getEvents (false, false, $eventId, false, $forthcomingOnly = (!$eventId), $allowHidden = ($action != 'show')))) {
-				#!# This stage should be supressed for ones being hidden
+			if (!$data = ($this->getEvents (false, false, $eventId, false, $forthcomingOnly = (!$eventId)))) {
 				#!# Throw 404
 				$html .= "\n<p>There is no such event; perhaps you followed an incorrect link or mistyped the URL?</p>";
 				echo $html;
@@ -1133,7 +1132,7 @@ if ($this->settings['organisationsMode']) {
 	public function eventlistings ()
 	{
 		# Get the event data
-		if (!$data = $this->getEvents ($providerId = false, $organisationId = false, $eventId = false, $eventType = false, $forthcomingOnly = true, $allowHidden = false, $ensureNotDeleted = true)) {
+		if (!$data = $this->getEvents ($providerId = false, $organisationId = false, $eventId = false, $eventType = false, $forthcomingOnly = true, $ensureNotDeleted = true)) {
 			$html  = "\n<p>There are no forthcoming events registered.</p>";
 			echo $html;
 			return false;
@@ -1334,7 +1333,7 @@ if ($this->settings['organisationsMode']) {
 	
 	
 	# Function to retrieve a list of events from the database
-	private function getEvents ($providerId = false, $organisationId = false, $eventId = false, $eventType = false, $forthcomingOnly = true, $allowHidden = false, $ensureNotDeleted = true)
+	private function getEvents ($providerId = false, $organisationId = false, $eventId = false, $eventType = false, $forthcomingOnly = true, $ensureNotDeleted = true)
 	{
 		# Construct the query
 		#!# Migrate addslashes to prepared statements
