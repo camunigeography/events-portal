@@ -757,22 +757,12 @@ class eventsPortal extends frontControllerApplication
 		} else {
 			$userIsManager = ($this->user && $data && ($data['user'] == $this->user));
 		}
+		if ($this->userIsAdministrator) {$userIsManager = true;}
 		
 		# Check that the user has rights to this organisation or that they are an administrator
-		if ($action != 'show') {
-			if (!$userIsManager) {
-				if ($this->settings['organisationsMode']) {
-					$provider = $this->providers[$providerId];
-					echo "\n<p>You are not a manager of this " . ($organisation['typeFormatted'] ? "{$organisation['typeFormatted']}'s " : '') . "entry and so cannot make changes to it. If you think you should be, please use the <a rel=\"nofollow\" href=\"{$provider['baseUrl']}{$provider['managerClaimFormLocation']}?organisation=" . htmlspecialchars ($organisation['id']) . "\">manager claim form</a>.</p>";
-					return false;
-				} else {
-					#!# bodged-in
-					if ($action != 'add') {
-						echo "\n<p>This does not appear to be your event, so you cannot make changes to it.</p>";
-						return false;
-					}
-				}
-			}
+		if (!$this->userHasEditRights ($action, $userIsManager, $providerId, $organisation, $errorHtml)) {
+			echo $errorHtml;
+			return false;
 		}
 		
 		# Check that the organisation wants events listings, if that setting exists
@@ -918,6 +908,33 @@ class eventsPortal extends frontControllerApplication
 		
 		# Show the HTML
 		echo $html;
+	}
+	
+	
+	# Function to determine if the user has rights
+	private function userHasEditRights ($action, $userIsManager, $providerId, $organisation, &$errorHtml = '')
+	{
+		# Everyone has rights to view
+		#!# Shouldn't really be in this code, as this doesn't concern "edit" rights
+		if ($action == 'show') {return true;}
+		
+		# Managers can edit
+		if ($userIsManager) {return true;}
+		
+		# In organisations mode, state if they not a manager
+		if ($this->settings['organisationsMode']) {
+			$provider = $this->providers[$providerId];
+			$errorHtml  = "\n<p>You are not a manager of this" . ($organisation['typeFormatted'] ? " {$organisation['typeFormatted']}'s" : '') . " entry and so cannot make changes to it.</p>";
+			$errorHtml .= "\n<p>If you think you should be, please use the <a rel=\"nofollow\" href=\"{$provider['baseUrl']}{$provider['managerClaimFormLocation']}?organisation=" . htmlspecialchars ($organisation['id']) . "\">manager claim form</a>.</p>";
+			return false;
+		}
+		
+		# Addition is permitted
+		if ($action == 'add') {return true;}
+		
+		# Deny access
+		$errorHtml = "\n<p>This does not appear to be your event, so you cannot make changes to it.</p>";
+		return false;
 	}
 	
 	
