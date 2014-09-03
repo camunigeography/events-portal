@@ -881,11 +881,8 @@ class eventsPortal extends frontControllerApplication
 		#!# Recurrence data insert here
 		*/
 		
-		# Get the ID of the inserted event and compute the URL of it online
+		# Get the ID of the inserted event
 		$eventId = ($eventId ? $eventId : $this->databaseConnection->getLatestId ());
-		$urlSlug = ($action == 'edit' ? $data['urlSlug'] : $result['urlSlug']);
-		$location = "{$this->eventsBaseUrl}/{$eventId}/{$urlSlug}/";
-		$url = $_SERVER['_SITE_URL'] . $location;
 		
 		# If an image has been uploaded, resize it if the size/format is wrong and convert to output format
 		image::resizeAndReformat ($imageName, $this->settings['eventsImageStoreRoot'], "{$eventId}.{$this->settings['imageOutputFormat']}", $this->settings['imageMaxSize'], $this->settings['imageOutputFormat']);
@@ -902,6 +899,9 @@ class eventsPortal extends frontControllerApplication
 		}
 		
 		# Take the user to the event or create a link in case direct redirection fails
+		$urlSlug = ($action == 'edit' ? $data['urlSlug'] : $result['urlSlug']);
+		$location = "{$this->eventsBaseUrl}/{$eventId}/{$urlSlug}/";
+		$url = $_SERVER['_SITE_URL'] . $location;
 		application::sendHeader (302, $url);
 		$html .= "\n<p>The event has been successfully " . ($action == 'edit' ? 'updated' : 'added') . ". <a href=\"{$location}\">View it now.</a></p>";
 		
