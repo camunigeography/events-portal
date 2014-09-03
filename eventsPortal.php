@@ -216,6 +216,7 @@ class eventsPortal extends frontControllerApplication
 			  `applicationName` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'Events' COMMENT 'Brand name of the application',
 			  `applicationNameExtended` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'Events' COMMENT 'Brand name of the application (extended)',
 			  `welcomeTextHtml` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '<strong>Welcome</strong> to our event listings service!' COMMENT 'HTML fragment for welcome text',
+			  `notifyOnSubmission` int(1) DEFAULT NULL COMMENT 'Whether to e-mail the feedback recipient when an event is submitted',
 			  `specialNoticeHtml` text COLLATE utf8_unicode_ci COMMENT 'Special notice (as HTML), if required',
 			  `whereHappening` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '%s lists events taking place.' COMMENT 'Phrase for where the events are happening (%s becomes application name)',
 			  `feedDescriptionDefault` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'Events' COMMENT 'Feed description (default)',
@@ -270,6 +271,7 @@ class eventsPortal extends frontControllerApplication
 	{
 		# Define overrides
 		$dataBindingSettingsOverrides = array (
+			'int1ToCheckbox' => true,
 			'attributes' => array (
 				'specialNoticeHtml' => array ('type' => 'textarea', 'cols' => 60, 'rows' => 8, ),
 			),
@@ -1111,6 +1113,13 @@ if ($this->settings['organisationsMode']) {
 			# If an end time is present, ensure there is an end date
 			if ($endTime && !$endDate) {
 				$form->registerProblem ('endDateMissing', "If entering an end time, please enter an end date also.");
+			}
+		}
+		
+		# If required, set to notify the feedback recipient when a new event is submitted
+		if ($this->settings['notifyOnSubmission']) {
+			if ($action == 'add' || $action == 'clone') {
+				$form->setOutputEmail ($this->settings['feedbackRecipient'], $this->settings['administratorEmail'], $_SERVER['SERVER_NAME'] . ' event submitted');
 			}
 		}
 		
