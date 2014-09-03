@@ -810,21 +810,11 @@ class eventsPortal extends frontControllerApplication
 					<li><a href=\"{$this->eventsBaseUrl}/\"><img src=\"/images/icons/application_view_list.png\" class=\"icon\" alt=\"*\" /> Return to full events list</a></li>
 				</ul>";
 			}
-			
-			# Show the details
-			$html .= $this->eventHtml ($data, $organisation['id'], $organisation['organisationName']);
-			
-			# Add a contact form if relevant
-			#!# This all feels very messy and over-complex
-			#!# bodged-in if-statement
-			if ($this->settings['organisationsMode']) {
-				$email = ($data['contactInfo'] && application::validEmail ($data['contactInfo']) ? $data['contactInfo'] : ((isSet ($organisation['emailVisible']) && $organisation['emailVisible']) ? $organisation['emailVisible'] : false));
-				if ($email && !$data['isRetrospective']) {
-					$html .= $this->addMailForm ($providerId, $email, $organisation['organisationName'], $organisation['timestamp'], $eventSpecificContact = $data['contactInfo'], $eventMode = true, $subject = $data['eventName']);
-				}
-			}
-			
-			# End here
+		}
+		
+		# Event show
+		if ($action == 'show') {
+			$html .= $this->manipulateShow ($data, $organisation);
 			echo $html;
 			return true;
 		}
@@ -1002,6 +992,30 @@ class eventsPortal extends frontControllerApplication
 		
 		# Show the HTML
 		echo $html;
+	}
+	
+	
+	# Function to show an event
+	private function manipulateShow ($data, $organisation)
+	{
+		# Start the HTML
+		$html  = '';
+		
+		# Show the details
+		$html .= $this->eventHtml ($data, $organisation['id'], $organisation['organisationName']);
+		
+		# Add a contact form if relevant
+		#!# This all feels very messy and over-complex
+#!# bodged-in
+if ($this->settings['organisationsMode']) {
+		$email = ($data['contactInfo'] && application::validEmail ($data['contactInfo']) ? $data['contactInfo'] : ((isSet ($organisation['emailVisible']) && $organisation['emailVisible']) ? $organisation['emailVisible'] : false));
+		if ($email && !$data['isRetrospective']) {
+			$html .= $this->addMailForm ($data['provider'], $email, $organisation['organisationName'], $organisation['timestamp'], $eventSpecificContact = $data['contactInfo'], $eventMode = true, $subject = $data['eventName']);
+		}
+}
+		
+		# Return the HTML
+		return $html;
 	}
 	
 	
