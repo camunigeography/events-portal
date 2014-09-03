@@ -188,6 +188,7 @@ class eventsPortal extends frontControllerApplication
 			  `startDate` date NOT NULL COMMENT 'Start date',
 			  `endTime` time DEFAULT NULL COMMENT 'End time',
 			  `endDate` date DEFAULT NULL COMMENT 'End date',
+			  `otherDates` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Does this event run on to any other dates? Please give details if so.',
 			  `recurrence` enum('Just this day/time','Event recurs at the same day/time each week during full term','Event recurs at the same day/time each week during the whole year') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'Just this day/time' COMMENT 'Does the event recur each week?',
 			  `eligibility` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Who can attend?',
 			  `deleted` int(1) DEFAULT NULL COMMENT 'Event has been deleted?',
@@ -1022,6 +1023,8 @@ if ($this->settings['organisationsMode']) {
 			'description' => array ('cols' => 50, 'rows' => 4, ),
 			"eventType__JOIN__{$this->settings['database']}__types__reserved" => array ('type' => 'select', 'values' => $this->getEventTypes (), ),
 			'startDate' => array ('picker' => true, 'default' => ($data ? $data['startDate'] : false), ),
+			#!# otherDates is temp while repeatability not implemented
+			'otherDates' => array ('description' => 'We will add these in for you once you have submitted the event.', ),
 			//'endDate' => array ('picker' => true, ),
 			'contactInfo' => array ('heading' => array ('3' => 'Who people can contact for more details'), 'title' => 'Contact' . ($organisation['typeFormatted'] ? ' (if not main ' . $organisation['typeFormatted'] . ' details)' : '') . ', e.g. e-mail address'),
 			'eligibility' => array ('heading' => array ('3' => 'Other details'), 'type' => 'select', 'values' => $this->settings['eligibilityOptions']),
@@ -1038,7 +1041,7 @@ if ($this->settings['organisationsMode']) {
 			'exclude' => array ('eventId', 'urlSlug', 'provider', 'organisation', 'user', 'lastUpdated', 'submissionTime', 'adminBan', 'deleted', 'recurrence', 'locationLongitude', 'locationLatitude', 'endDate', ),
 			'attributes' => $dataBindingAttributes,
 			#!# Need to reorder fields in database table
-			'ordering' => array ('eventName', 'description', "eventType__JOIN__{$this->settings['database']}__types__reserved", 'locationName', 'startDate', 'startTime', 'endDate', 'endTime', 'contactInfo', 'eligibility', 'cost', 'webpageUrl', 'facebookUrl', 'picture', ),
+			'ordering' => array ('eventName', 'description', "eventType__JOIN__{$this->settings['database']}__types__reserved", 'locationName', 'startDate', 'startTime', 'endDate', 'endTime', 'otherDates', 'contactInfo', 'eligibility', 'cost', 'webpageUrl', 'facebookUrl', 'picture', ),
 		));
 		
 		# Add sanity-checking constraints
