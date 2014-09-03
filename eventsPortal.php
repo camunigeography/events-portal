@@ -1341,7 +1341,7 @@ if ($this->settings['organisationsMode']) {
 		$query = "SELECT
 			events.*,
 			/* Preformatted times */
-				DATE_FORMAT(events.startDate,'%W %D %M') AS startDateFormatted,
+				DATE_FORMAT(events.startDate,'%W %D %M, %Y') AS startDateFormatted,
 				DATE_FORMAT(events.startTime,'%l.%i%p') AS startTimeFormatted,
 				DATE_FORMAT(events.endDate,'%W %D %M') AS endDateFormatted,
 				DATE_FORMAT(events.endTime,'%l.%i%p') AS endTimeFormatted,
@@ -1437,8 +1437,10 @@ if ($this->settings['organisationsMode']) {
 		
 		# Construct the overall date/time string
 		$data['datetime'] = $data['startDateFormatted'] . ($data['startTimeFormatted'] ? ", {$data['startTimeFormatted']}" : '');	// Default - showing start date & time
-		if ($data['endTime'] && $data['sameDay']) {	// Event with end time that is the same day (which includes early next morning)
-			$data['datetime'] .= "-{$data['endTimeFormatted']}";
+		if ($data['sameDay']) {
+			if ($data['endTime']) {// Event with end time that is the same day (which includes early next morning)
+				$data['datetime'] .= "-{$data['endTimeFormatted']}";
+			}
 		} else if ($data['endDate']) {	// All other events with an end date
 			$data['datetime'] .= ' -<br />' . $data['endDateFormatted'] . ($data['endTimeFormatted'] ? ", {$data['endTimeFormatted']}" : '');
 		}
