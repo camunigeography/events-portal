@@ -96,8 +96,9 @@ class eventsPortal extends frontControllerApplication
 			'addevents' => array (
 				'description' => 'Add an event',
 				'url' => '/events/add.html',
-				'tab' => '<img src="/images/icons/add.png" alt="" class="icon"> Add an event',
+				'tab' => 'Add an event',
 				'authentication' => true,
+				'icon' => 'add',
 			),
 			'listorganisationevents' => array (
 				'description' => 'List events',
@@ -153,7 +154,8 @@ class eventsPortal extends frontControllerApplication
 		);
 		
 		# Overwrite global settings
-		$this->globalActions['home']['tab'] = '<img src="/images/icons/application_view_list.png" alt="" class="icon"> Listing of all events';
+		$this->globalActions['home']['tab'] = 'Listing of all events';
+		$this->globalActions['home']['icon'] = 'application_view_icons';
 		
 		# Add in external provider links
 		if ($this->settings['organisationsMode']) {
