@@ -1,7 +1,7 @@
 <?php
 
 # Event portal system
-# Version 1.1.3
+# Version 1.2.0
 # 
 # Licence: GPL
 # (c) Martin Lucas-Smith, Cambridge University Students' Union
@@ -130,6 +130,12 @@ class eventsPortal extends frontControllerApplication
 				'usetab' => 'events',
 				'authentication' => true,
 				'heading' => false,
+			),
+			'archive' => array (
+				'description' => 'Archive of previous events',
+				'url' => 'archive/',
+				'tab' => 'Previous events',
+				'icon' => 'page_white_copy',
 			),
 			'eventlistings' => array (
 				'description' => 'Listings export',
@@ -1152,6 +1158,104 @@ if ($this->settings['organisationsMode']) {
 	}
 	
 	
+	# Archive listing
+	public function archive ()
+	{
+		# Start the HTML
+		$html = '';
+		
+		# Get the date of the earliest event
+		$startDate = $this->getEarliestEventDate ();
+		
+		# Get all months since the earliest date
+		require_once ('timedate.php');
+		$monthsByYear = timedate::getMonthsByYear ($startDate, true);
+		
+		# Determine if a year and month have been requested, and that they are valid
+		$selectedYear = false;
+		$selectedMonth = false;
+		if (isSet ($_GET['year']) || isSet ($_GET['month'])) {
+			$selectedYear = (isSet ($_GET['year']) ? $_GET['year'] : false);
+			$selectedMonth = (isSet ($_GET['month']) ? $_GET['month'] : false);
+			if (!$selectedYear || !$selectedMonth || !isSet ($monthsByYear[$selectedYear]) || !isSet ($monthsByYear[$selectedYear][$selectedMonth])) {
+				$html = $this->page404 ();
+				echo $html;
+				return false;
+			}
+		}
+		
+		# Create a listing and a droplist
+		$listingHtml  = '';
+		$jumplist = array ();
+		$currentYearMonthUrl = false;
+		foreach ($monthsByYear as $year => $months) {
+			$monthsList = array ();
+			foreach ($months as $month => $monthYearString) {
+				$url = "{$this->baseUrl}/archive/{$year}/{$month}/";
+				$monthsList[] = "<a href=\"{$url}\">{$monthYearString}</a>";
+				$jumplist[$url] = $monthYearString;
+				if (($year == $selectedYear) && ($month == $selectedMonth)) {
+					$currentYearMonthUrl = $url;
+				}
+			}
+			$listingHtml .= "\n<h3>{$year}</h3>";
+			$listingHtml .= application::htmlUl ($monthsList);
+		}
+		#!# Would be nice if htmlJumplist had nesting support, so that years can be appear nested
+		$jumplistHtml = pureContent::htmlJumplist ($jumplist, $currentYearMonthUrl, false, $name = 'month', $parentTabLevel = 0, $class = 'jumplist', $introductoryText = 'View month: ');
+		
+		# Show the jumplist
+		$html .= $jumplistHtml;
+		
+		# If on the front page, show the listing and end
+		if (!$currentYearMonthUrl) {
+			$html .= $listingHtml;
+			echo $html;
+			return true;
+		}
+		
+		# Construct a date range for the listing
+		$startDate = $selectedYear . '-' . $selectedMonth . '-' . '01';
+		$endDate = $selectedYear . '-' . $selectedMonth . '-' . cal_days_in_month (CAL_GREGORIAN, $selectedMonth, $selectedYear);
+		$today = date ('Y-m-d');
+		if ($endDate > $today) {
+			$endDate = $today;
+		};
+		
+		# Get the events for this range
+		if (!$data = $this->getEvents (false, false, false, false, $forthcomingOnly = false, true, $startDate, $endDate)) {
+			$html .= "\n<p>There were no events for {$monthsByYear[$selectedYear][$selectedMonth]}.</p>";
+			echo $html;
+			return true;
+		}
+		
+		# Render the events as a listing table
+		$html .= $this->renderEventsListingTable ($data);
+		
+		# Show the HTML
+		echo $html;
+	}
+	
+	
+	# Function to get the date of the earliest event
+	private function getEarliestEventDate ()
+	{
+		# Get the earliest event that is not deleted
+		$query = "SELECT
+			*
+			FROM {$this->settings['database']}.{$this->settings['table']}
+			WHERE (events.deleted = '' OR events.deleted IS NULL)
+			ORDER BY startDate
+			LIMIT 1;
+		";
+		$earliestDate = $this->databaseConnection->getOneField ($query, 'startDate');
+		
+		# Return the value
+		return $earliestDate;
+	}
+	
+	
+	
 	# Function to produce a listings export
 	public function eventlistings ()
 	{
@@ -1282,6 +1386,35 @@ if ($this->settings['organisationsMode']) {
 			return $html;
 		}
 		
+		# Render the events as a listing table
+		$html .= $this->renderEventsListingTable ($data);
+		
+		# Give a permalink to the events page
+		if ($organisation && !$organisationStandalonePage) {
+			if (!isSet ($completeListLinkHasBeenShown)) {
+				$html .= "\n<p class=\"completelist\"><a href=\"{$organisation['eventsBaseUrl']}/\">[Link for events-only page]</a></p>";
+			}
+		}
+		
+		# Compile a box for the organisation mode view
+		$html = $this->surroundOrganisationalListingWithBox ($html, $organisation);
+		
+		# Compile the HTML, showing the logo
+		if ($organisation && $organisationStandalonePage) {
+			$html = "\n<h2>Forthcoming events for <a href=\"{$organisation['profileBaseUrl']}/\">{$organisation['organisationName']}</a></h2>" . $html;
+		}
+		
+		# Return the HTML
+		return $html;
+	}
+	
+	
+	# Function to render the events listing table
+	private function renderEventsListingTable ($data)
+	{
+		# Start the HTML
+		$html = '';
+		
 		# Regroup by date
 		$data = application::regroup ($data, 'startDate');
 		
@@ -1317,21 +1450,6 @@ if ($this->settings['organisationsMode']) {
 			}
 		}
 		
-		# Give a permalink to the events page
-		if ($organisation && !$organisationStandalonePage) {
-			if (!isSet ($completeListLinkHasBeenShown)) {
-				$html .= "\n<p class=\"completelist\"><a href=\"{$organisation['eventsBaseUrl']}/\">[Link for events-only page]</a></p>";
-			}
-		}
-		
-		# Compile a box for the organisation mode view
-		$html = $this->surroundOrganisationalListingWithBox ($html, $organisation);
-		
-		# Compile the HTML, showing the logo
-		if ($organisation && $organisationStandalonePage) {
-			$html = "\n<h2>Forthcoming events for <a href=\"{$organisation['profileBaseUrl']}/\">{$organisation['organisationName']}</a></h2>" . $html;
-		}
-		
 		# Return the HTML
 		return $html;
 	}
@@ -1362,7 +1480,7 @@ if ($this->settings['organisationsMode']) {
 	
 	
 	# Function to retrieve a list of events from the database
-	private function getEvents ($providerId = false, $organisationId = false, $eventId = false, $eventType = false, $forthcomingOnly = true, $ensureNotDeleted = true)
+	private function getEvents ($providerId = false, $organisationId = false, $eventId = false, $eventType = false, $forthcomingOnly = true, $ensureNotDeleted = true, $fromStartDate = false, $untilEndDate = false)
 	{
 		# Construct the query
 		#!# Migrate addslashes to prepared statements
@@ -1391,6 +1509,9 @@ if ($this->settings['organisationsMode']) {
 				. ($forthcomingOnly ? " AND CAST(NOW() as DATE) <= startDate " : '')
 			/* Event types */
 				. ($eventType ? " AND eventType__JOIN__{$this->settings['database']}__types__reserved = '" . addslashes ($eventType) . "'" : '')
+			/* Date ranges */
+				 . ($fromStartDate ? " AND startDate >= '{$fromStartDate}'" : '')
+				 . ($untilEndDate ? " AND startDate <= '{$untilEndDate}'" : '')		/* Currently assumes single-day events */
 			/* Match the provider and organisation */
 				. ($providerId ? " AND provider = '" . addslashes ($providerId) . "'" : '')
 				. ($organisationId ? " AND organisation = '" . addslashes ($organisationId) . "'" : '') . "
