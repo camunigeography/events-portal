@@ -76,6 +76,9 @@ class eventsPortal extends frontControllerApplication
 			
 			# Whether to enable organisations mode, which uses the providers infrastructure
 			'organisationsMode' => true,
+			
+			# Special notice, if required
+			'specialNoticeHtml' => false,
 		);
 		
 		# Return the defaults
@@ -1235,6 +1238,11 @@ if ($this->settings['organisationsMode']) {
 			}
 			$selected = ($eventType == '' ? false : "{$this->baseUrl}/{$eventType}/");
 			$html .= pureContent::htmlJumplist ($eventTypesLinked, $selected, $this->baseUrl . '/', 'jumplist', 0, 'jumplist', 'Show event type: ');
+		}
+		
+		# Add a special notice, if required
+		if ($this->settings['specialNoticeHtml']) {
+			$html .= $this->settings['specialNoticeHtml'];
 		}
 		
 		# End if no events
