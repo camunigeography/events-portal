@@ -1,7 +1,7 @@
 <?php
 
 # Event portal system
-# Version 1.1.2
+# Version 1.1.3
 # 
 # Licence: GPL
 # (c) Martin Lucas-Smith, Cambridge University Students' Union
@@ -217,6 +217,7 @@ class eventsPortal extends frontControllerApplication
 			  `applicationNameExtended` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'Events' COMMENT 'Brand name of the application (extended)',
 			  `welcomeTextHtml` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '<strong>Welcome</strong> to our event listings service!' COMMENT 'HTML fragment for welcome text',
 			  `notifyOnSubmission` int(1) DEFAULT NULL COMMENT 'Whether to e-mail the feedback recipient when an event is submitted',
+			  `eventAppendedHtml` text COLLATE utf8_unicode_ci COMMENT 'Optional HTML appended to event page; %id will be replaced with the event ID if present',
 			  `specialNoticeHtml` text COLLATE utf8_unicode_ci COMMENT 'Special notice (as HTML), if required',
 			  `whereHappening` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '%s lists events taking place.' COMMENT 'Phrase for where the events are happening (%s becomes application name)',
 			  `feedDescriptionDefault` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'Events' COMMENT 'Feed description (default)',
@@ -274,6 +275,7 @@ class eventsPortal extends frontControllerApplication
 			'int1ToCheckbox' => true,
 			'attributes' => array (
 				'specialNoticeHtml' => array ('type' => 'textarea', 'cols' => 60, 'rows' => 8, ),
+				'eventAppendedHtml' => array ('type' => 'textarea', 'cols' => 60, 'rows' => 4, ),
 			),
 		);
 		
@@ -1529,6 +1531,11 @@ if ($this->settings['organisationsMode']) {
 		
 		$html .= "</div>
 		</div>";
+		
+		# If required, add appended text
+		if ($this->settings['eventAppendedHtml']) {
+			$html .= "\n\n" . str_replace ('%id', $event['eventId'], $this->settings['eventAppendedHtml']);
+		}
 		
 		# Return the HTML
 		return $html;
