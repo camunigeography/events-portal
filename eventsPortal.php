@@ -700,7 +700,7 @@ class eventsPortal extends frontControllerApplication
 			$providerId = 'internal';
 			$organisation = array (
 				'id' => 'internal',
-				'typeFormatted' => false,
+				'typeFormatted' => 'organisation',
 				'events' => true,
 				'organisationName' => false,
 				'emailVisible' => false,
@@ -813,7 +813,7 @@ class eventsPortal extends frontControllerApplication
 			return false;
 		}
 		
-		# Add in the automatic data
+		# Inject fixed data
 		$result += array (
 #!# Provider needs to be presupplied into the entered data
 			// 'eventId',	// This is added automatically by the database
