@@ -1301,8 +1301,8 @@ if ($this->settings['organisationsMode']) {
 	}
 	
 	
-	# Function to list upcoming events
-	private function eventsList ($providerId, $organisation = false, $organisationStandalonePage = false, $eventType = false)
+	# Function to list upcoming events; NB this is a public API call; external applications can include listings
+	public function eventsList ($providerId, $organisation = false, $organisationStandalonePage = false, $eventType = false)
 	{
 		# Start the HTML
 		$html  = '';
