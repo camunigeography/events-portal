@@ -990,7 +990,7 @@ class eventsPortal extends frontControllerApplication
 if ($this->settings['organisationsMode']) {
 		$email = ($data['contactInfo'] && application::validEmail ($data['contactInfo']) ? $data['contactInfo'] : ((isSet ($organisation['emailVisible']) && $organisation['emailVisible']) ? $organisation['emailVisible'] : false));
 		if ($email && !$data['isRetrospective']) {
-			$html .= $this->addMailForm ($data['provider'], $email, $organisation['organisationName'], $organisation['timestamp'], $eventSpecificContact = $data['contactInfo'], $eventMode = true, $subject = $data['eventName']);
+			$html .= $this->addMailForm ($email, $organisation['organisationName'], $data['eventName']);
 		}
 }
 		
@@ -1749,13 +1749,69 @@ if ($this->settings['organisationsMode']) {
 	}
 	
 	
-	#!# Possibly needs further refactoring to remove this dependency
-	private function addMailForm ($providerId, $email, $name, $timestamp, $eventSpecificContact = false, $eventMode = false, $subject = false)
+	# Function to add a mail form
+	private function addMailForm ($email, $name /* $name is assumed to have HTML entities already converted */, $eventName)
 	{
-		# Add the mail form
-		require_once ($this->providers[$providerId]['classFile']);
-		$instance = new $providerId (array (), true);
-		return $instance->addMailForm ($email, $name, $timestamp, $eventSpecificContact, $eventMode, $subject);
+		# End if disabled
+		if (!$email) {return false;}
+		
+		# Start the HTML
+		$html  = "\n" . '<div class="graybox clearfix" id="message">';
+		$html .= "\n" . '<img class="diagram right" src="/images/general/message.gif" alt="*" width="48" height="48" border="0" />';
+		
+		# Load and instantiate the form library
+		require_once ('ultimateForm.php');
+		$form = new form (array (
+			'div' => false,
+			'displayDescriptions' => false,
+			'displayRestrictions' => false,
+			/* 'div' => 'messageform', */
+			'formCompleteText' => 'Your message concerning this event has been sent. Hopefully they will get back in touch with you shortly.',
+			'emailIntroductoryText' => "The message below was submitted via the {$this->settings['applicationName']} webform.\nPlease respond direct to the sender.\n\n(If you are no longer the contact for the event, please update the event details at: {$_SERVER['_SITE_URL']}" . $this->baseUrl . '/' . " . Please then forward the e-mail below to the new contact.)",
+			'antispam' => true,
+			'submitTo' => '#message',
+		));
+		
+		# Heading
+		$form->heading (3, 'Contact the organisers of this event');
+		$form->input (array (
+			'name'		=> 'subject',
+			'title'		=> 'Subject',
+			'default'	=> $eventName,
+			'required'	=> true,
+			'disallow'	=> 'https?:/',
+		));
+		$form->textarea (array (
+			'name'			=> 'message',
+			'title'					=> 'Message',
+			'required'				=> true,
+			'cols'				=> 40,
+		));
+		$form->input (array (
+			'name'			=> 'name',
+			'title'					=> 'Your name',
+			'required'				=> true,
+			'default'		=> ($this->settings['useCamUniLookup'] && $this->user && ($userLookupData = camUniData::getLookupData ($this->user)) ? $userLookupData['name'] : ''),
+		));
+		$form->email (array (
+			'name'			=> 'contacts',
+			'title'					=> 'E-mail',
+			'required'				=> true,
+			'default'		=> ($this->user ? $this->user . '@cam.ac.uk' : ''),
+		));
+		
+		# Set the processing options
+		$form->setOutputEmail ($email, $this->settings['administratorEmail'], $this->settings['applicationName'] . ' contact form - {subject}', NULL, $replyToField = 'contacts');
+		$form->setOutputScreen ();
+		
+		# Process the form
+		$result = $form->process ($html);
+		
+		# Complete the HTML
+		$html .= "\n" . '</div>';
+		
+		# Return the HTML
+		return $html;
 	}
 }
 
