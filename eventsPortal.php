@@ -42,6 +42,9 @@ class eventsPortal extends frontControllerApplication
 			'administrators' => 'administrators',
 			'settingsTableExplodeTextarea' => true,
 			
+			# API access
+			'apiUsername' => false,
+			
 			# E-mail addresses
 			'feedbackRecipient' => false,
 			
@@ -1812,6 +1815,38 @@ if ($this->settings['organisationsMode']) {
 		
 		# Return the HTML
 		return $html;
+	}
+	
+	
+	# API call for dashboard
+	public function apiCall_dashboard ($username = NULL)
+	{
+		# Start the HTML
+		$html = '';
+		
+		# State that the service is enabled
+		$data['enabled'] = true;
+		
+		# Ensure a username is supplied
+		if (!$username) {
+			$data['error'] = 'No username was supplied.';
+			return $data;
+		}
+		
+		# Define description
+		$data['descriptionHtml'] = "<p>With the {$this->settings['applicationName']} pages, you can advertise and view events.</p>";
+		
+		# Add links
+		$data['links']["{$this->baseUrl}/"] = "{icon:application_view_icons} List events";
+
+		# Add link to add an event
+		$html .= "<p><a href=\"{$this->baseUrl}/add.html\" class=\"actions\"><img src=\"/images/icons/add.png\" class=\"icon\" /> Add an event</a></p>";
+
+		# Register the HTML
+		$data['html'] = $html;
+		
+		# Return the data
+		return $data;
 	}
 }
 
