@@ -1305,6 +1305,7 @@ if ($this->settings['organisationsMode']) {
 	
 	
 	# Function to list upcoming events; NB this is a public API call; external applications can include listings
+	#!# $organisation (as an array) is currently assumed to have all its values converted to HTML entities - need to do this internally here instead
 	public function eventsList ($providerId, $organisation = false, $organisationStandalonePage = false, $eventType = false)
 	{
 		# Start the HTML
@@ -1838,10 +1839,10 @@ if ($this->settings['organisationsMode']) {
 		
 		# Add links
 		$data['links']["{$this->baseUrl}/"] = "{icon:application_view_icons} List events";
-
+		
 		# Add link to add an event
 		$html .= "<p><a href=\"{$this->baseUrl}/add.html\" class=\"actions\"><img src=\"/images/icons/add.png\" class=\"icon\" /> Add an event</a></p>";
-
+		
 		# Register the HTML
 		$data['html'] = $html;
 		
