@@ -1076,7 +1076,7 @@ if ($this->settings['organisationsMode']) {
 			*/
 			'webpageUrl' => array ('type' => 'input', 'regexpi' => '(http|https)://', 'placeholder' => 'http://...', ),
 			'facebookUrl' => array ('regexpi' => '(http|https)://', 'placeholder' => 'http://...', ),
-			'description' => array ('cols' => 50, 'rows' => 4, ),
+			'description' => array ('cols' => 50, 'rows' => 8, ),
 			"eventType__JOIN__{$this->settings['database']}__types__reserved" => array ('type' => 'select', 'values' => $this->getEventTypes (), ),
 			'startDate' => array ('picker' => true, 'default' => ($data ? $data['startDate'] : false), ),
 			'endDate' => array ('picker' => true, 'description' => 'Note: multi-day events not yet shown spread through listings'),
