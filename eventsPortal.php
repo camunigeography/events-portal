@@ -871,7 +871,6 @@ class eventsPortal extends frontControllerApplication
 		# Ensure MySQL compatibility with NULL values
 		if (!$result['startTime']) {$result['startTime'] = NULL;}
 		if (!$result['endTime']) {$result['endTime'] = NULL;}
-		$result['endDate'] = $result['startDate'];
 		//if (!$result['deleted']) {$result['deleted'] = NULL;}
 		
 		# Discard the image, first caching its name
@@ -1080,11 +1079,11 @@ if ($this->settings['organisationsMode']) {
 			'description' => array ('cols' => 50, 'rows' => 4, ),
 			"eventType__JOIN__{$this->settings['database']}__types__reserved" => array ('type' => 'select', 'values' => $this->getEventTypes (), ),
 			'startDate' => array ('picker' => true, 'default' => ($data ? $data['startDate'] : false), ),
+			'endDate' => array ('picker' => true, 'description' => 'Note: multi-day events not yet shown spread through listings'),
 			'startTime' => array ('description' => 'E.g.&nbsp;6pm', ),
 			'endTime' => array ('description' => 'E.g.&nbsp;9.30pm', ),
 			#!# otherDates is temp while repeatability not implemented
 			'otherDates' => array ('description' => 'We will add these in for you once you have submitted the event.', ),
-			//'endDate' => array ('picker' => true, ),
 			'contactInfo' => array ('heading' => array ('3' => 'Who people can contact for more details'), 'title' => 'Contact' . ($organisation['typeFormatted'] ? ' (if not main ' . $organisation['typeFormatted'] . ' details)' : '') . ', e.g. e-mail address'),
 			'eligibility' => array ('heading' => array ('3' => 'Other details'), 'type' => 'select', 'values' => $this->settings['eligibilityOptions']),
 			'picture' => array ('heading' => array ('3' => 'Image/picture/logo (if any)', 'p' => $pictureMessage, ), 'type' => 'upload', 'directory' => $imageDirectory = $this->settings['eventsImageStoreRoot'], 'flatten' => true, ),
@@ -1097,7 +1096,7 @@ if ($this->settings['organisationsMode']) {
 			'table' => $this->settings['table'],
 			'data' => ($data ? $data : array ()),
 			#!# recurrence,locationLongitude,locationLatitude all not yet supported - need to be removed from database structure until they are
-			'exclude' => array ('eventId', 'urlSlug', 'provider', 'organisation', 'user', 'lastUpdated', 'submissionTime', 'adminBan', 'deleted', 'recurrence', 'locationLongitude', 'locationLatitude', 'endDate', ),
+			'exclude' => array ('eventId', 'urlSlug', 'provider', 'organisation', 'user', 'lastUpdated', 'submissionTime', 'adminBan', 'deleted', 'recurrence', 'locationLongitude', 'locationLatitude', ),
 			'attributes' => $dataBindingAttributes,
 			#!# Need to reorder fields in database table
 			'ordering' => array ('eventName', 'description', "eventType__JOIN__{$this->settings['database']}__types__reserved", 'locationName', 'startDate', 'startTime', 'endDate', 'endTime', 'otherDates', 'contactInfo', 'eligibility', 'cost', 'webpageUrl', 'facebookUrl', 'picture', ),
@@ -1110,8 +1109,8 @@ if ($this->settings['organisationsMode']) {
 			# Compile the start/end date/time
 			$startDate = (int) str_replace ('-', '', $unfinalisedData['startDate']);
 			$startTime = (int) str_replace (':', '', $unfinalisedData['startTime']);
-			$endDate = $startDate;	// Multi-day support not currently enabled
-			$endTime = (int) str_replace (':', '', $unfinalisedData['endTime']);
+			$endDate  = (int) str_replace ('-', '', $unfinalisedData['endDate']);
+			$endTime  = (int) str_replace (':', '', $unfinalisedData['endTime']);
 			
 			# If there is an end date, and days are different, ensure the dates are in order
 			if ($endDate && ($endDate < $startDate)) {
