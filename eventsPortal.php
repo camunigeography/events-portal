@@ -1492,7 +1492,7 @@ if ($this->settings['organisationsMode']) {
 			/* Preformatted times */
 				DATE_FORMAT(events.startDate,'%W %D %M, %Y') AS startDateFormatted,
 				DATE_FORMAT(events.startTime,'%l.%i%p') AS startTimeFormatted,
-				DATE_FORMAT(events.endDate,'%W %D %M') AS endDateFormatted,
+				DATE_FORMAT(events.endDate, IF ( (DATE_FORMAT(events.startDate, '%Y') = DATE_FORMAT(events.endDate, '%Y')), '%W %D %M', '%W %D %M, %Y' ) ) AS endDateFormatted,
 				DATE_FORMAT(events.endTime,'%l.%i%p') AS endTimeFormatted,
 				IF((  (endDate = '') || (endDate IS NULL) || (endDate = startDate) || ((DATEDIFF(endDate,startDate) = 1) && (DATE_FORMAT(events.endTime,'%l') <= 7))  ), 1, 0) AS sameDay,
 				IF((startDate < CAST(NOW() as DATE)), 1, 0) AS isRetrospective,
