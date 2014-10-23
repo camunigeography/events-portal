@@ -1177,9 +1177,39 @@ if ($this->settings['organisationsMode']) {
 		# Get the date of the earliest event
 		$startDate = $this->getEarliestEventDate ();
 		
+		# Select the date, or if none selected, show the date selection controls
+		$dateRange = $this->selectDateRange ($dateSelectionHtml, $startDate);
+		
+		# Show the date selection control
+		$html .= $dateSelectionHtml;
+		
+		# If no date range selected, end at this point
+		if (!$dateRange) {
+			echo $html;
+			return;
+		}
+		
+		# Get the events for this range
+		if (!$data = $this->getEvents (false, false, false, false, $forthcomingOnly = false, true, $dateRange['startDate'], $dateRange['endDate'])) {
+			$html .= "\n<p>There were no events for {$monthsByYear[$selectedYear][$selectedMonth]}.</p>";
+			echo $html;
+			return;
+		}
+		
+		# Render the events as a listing table
+		$html .= $this->renderEventsListingTable ($data, $dateRange['startDate'], $dateRange['endDate']);
+		
+		# Show the HTML
+		echo $html;
+	}
+	
+	
+	# Function to select a date range
+	private function selectDateRange (&$html = '', $startDate, $endDate = false, $reverseOrdering = true)
+	{
 		# Get all months since the earliest date
 		require_once ('timedate.php');
-		$monthsByYear = timedate::getMonthsByYear ($startDate, true);
+		$monthsByYear = timedate::getMonthsByYear ($startDate, $endDate, $reverseOrdering);
 		
 		# Determine if a year and month have been requested, and that they are valid
 		$selectedYear = false;
@@ -1189,7 +1219,6 @@ if ($this->settings['organisationsMode']) {
 			$selectedMonth = (isSet ($_GET['month']) ? $_GET['month'] : false);
 			if (!$selectedYear || !$selectedMonth || !isSet ($monthsByYear[$selectedYear]) || !isSet ($monthsByYear[$selectedYear][$selectedMonth])) {
 				$html = $this->page404 ();
-				echo $html;
 				return false;
 			}
 		}
@@ -1217,29 +1246,18 @@ if ($this->settings['organisationsMode']) {
 		# Show the jumplist
 		$html .= $jumplistHtml;
 		
-		# If on the front page, show the listing and end
+		# If on the front page, create the listing and end
 		if (!$currentYearMonthUrl) {
 			$html .= $listingHtml;
-			echo $html;
-			return true;
+			return false;
 		}
 		
 		# Construct a date range for the listing
 		$startDate = $selectedYear . '-' . $selectedMonth . '-' . '01';
 		$endDate = $selectedYear . '-' . $selectedMonth . '-' . cal_days_in_month (CAL_GREGORIAN, $selectedMonth, $selectedYear);
 		
-		# Get the events for this range
-		if (!$data = $this->getEvents (false, false, false, false, $forthcomingOnly = false, true, $startDate, $endDate)) {
-			$html .= "\n<p>There were no events for {$monthsByYear[$selectedYear][$selectedMonth]}.</p>";
-			echo $html;
-			return true;
-		}
-		
-		# Render the events as a listing table
-		$html .= $this->renderEventsListingTable ($data, $startDate, $endDate);
-		
-		# Show the HTML
-		echo $html;
+		# Return the list
+		return array ('startDate' => $startDate, 'endDate' => $endDate);
 	}
 	
 	
