@@ -205,6 +205,7 @@ class eventsPortal extends frontControllerApplication
 			  `startDate` date NOT NULL COMMENT 'Start date',
 			  `endTime` time DEFAULT NULL COMMENT 'End time',
 			  `endDate` date DEFAULT NULL COMMENT 'End date',
+			  `daysOfWeek` set('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday') COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'If running over a date range, day(s) of week',
 			  `otherDates` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Does this event run on to any other dates? Please give details if so.',
 			  `recurrence` enum('Just this day/time','Event recurs at the same day/time each week during full term','Event recurs at the same day/time each week during the whole year') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'Just this day/time' COMMENT 'Does the event recur each week?',
 			  `eligibility` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Who can attend?',
@@ -1079,7 +1080,7 @@ if ($this->settings['organisationsMode']) {
 			'description' => array ('cols' => 50, 'rows' => 8, ),
 			"eventType__JOIN__{$this->settings['database']}__types__reserved" => array ('type' => 'select', 'values' => $this->getEventTypes (), ),
 			'startDate' => array ('picker' => true, 'default' => ($data ? $data['startDate'] : false), ),
-			'endDate' => array ('picker' => true, 'description' => 'Note: multi-day events not yet shown spread through listings'),
+			'endDate' => array ('picker' => true, ),
 			'startTime' => array ('description' => 'E.g.&nbsp;6pm', ),
 			'endTime' => array ('description' => 'E.g.&nbsp;9.30pm', ),
 			#!# otherDates is temp while repeatability not implemented
@@ -1099,7 +1100,7 @@ if ($this->settings['organisationsMode']) {
 			'exclude' => array ('eventId', 'urlSlug', 'provider', 'organisation', 'user', 'lastUpdated', 'submissionTime', 'adminBan', 'deleted', 'recurrence', 'locationLongitude', 'locationLatitude', ),
 			'attributes' => $dataBindingAttributes,
 			#!# Need to reorder fields in database table
-			'ordering' => array ('eventName', 'description', "eventType__JOIN__{$this->settings['database']}__types__reserved", 'locationName', 'startDate', 'startTime', 'endDate', 'endTime', 'otherDates', 'contactInfo', 'eligibility', 'cost', 'webpageUrl', 'facebookUrl', 'picture', ),
+			'ordering' => array ('eventName', 'description', "eventType__JOIN__{$this->settings['database']}__types__reserved", 'locationName', 'startDate', 'startTime', 'endDate', 'endTime', 'daysOfWeek', 'otherDates', 'contactInfo', 'eligibility', 'cost', 'webpageUrl', 'facebookUrl', 'picture', ),
 		));
 		
 		# Add sanity-checking constraints
@@ -1235,7 +1236,7 @@ if ($this->settings['organisationsMode']) {
 		}
 		
 		# Render the events as a listing table
-		$html .= $this->renderEventsListingTable ($data);
+		$html .= $this->renderEventsListingTable ($data, $startDate, $endDate);
 		
 		# Show the HTML
 		echo $html;
@@ -1416,13 +1417,16 @@ if ($this->settings['organisationsMode']) {
 	
 	
 	# Function to render the events listing table
-	private function renderEventsListingTable ($data)
+	private function renderEventsListingTable ($data, $fromStartDate = false, $untilEndDate = false)
 	{
 		# Start the HTML
 		$html = '';
 		
-		# Regroup by date
-		$data = application::regroup ($data, 'startDate');
+		# Expand date ranges into separate entries
+		$data = $this->expandDateRanges ($data, $fromStartDate, $untilEndDate);
+		
+		# Regroup by the entry date
+		$data = application::regroup ($data, 'entryDate');
 		
 		# Start an event counter
 		$counter = 0;
@@ -1435,7 +1439,7 @@ if ($this->settings['organisationsMode']) {
 			foreach ($thatDaysEvents as $eventId => $event) {
 				
 				$table[$eventId]['key'] = strtolower ($event['timeCompiledBrief']);
-				$table[$eventId]['value'] = "<a class=\"name\" href=\"{$this->eventsBaseUrl}/{$eventId}/{$event['urlSlug']}/\">" . htmlspecialchars ($event['eventName']) . '</a>';
+				$table[$eventId]['value'] = "<a class=\"name\" href=\"{$this->eventsBaseUrl}/{$event['eventId']}/{$event['urlSlug']}/\">" . htmlspecialchars ($event['eventName']) . '</a>';	// $event['eventId'] is the real ID rather than a potential namespaced clone
 				if (!$organisation) {
 					if ($this->settings['organisationsMode']) {
 						$table[$eventId]['value'] .= " - <a href=\"{$event['profileBaseUrl']}/\">" . htmlspecialchars ($event['organisationName']) . '</a>';
@@ -1443,7 +1447,7 @@ if ($this->settings['organisationsMode']) {
 				}
 				#!# Add editing links here; but table fields must be consistent
 			}
-			$html .= "\n<h4 class=\"eventslist\">{$event['startDateFormatted']}</h4>";	// The startDateFormatted will be the same for each in the same date, so it's safe to use the most recent
+			$html .= "\n<h4 class=\"eventslist\">{$event['entryDateFormatted']}</h4>";	// The entryDateFormatted will be the same for each in the same date, so it's safe to use the most recent
 			$html .= application::htmlTable ($table, false /* array ('key' => 'Time', 'value' => 'Event details') */, 'lines eventslist alternate hover', $showKey = false, false, $allowHtml = true);
 			
 			# End if counter reached, showing a list to the total
@@ -1458,6 +1462,54 @@ if ($this->settings['organisationsMode']) {
 		
 		# Return the HTML
 		return $html;
+	}
+	
+	
+	# Function to expand date ranges into separate entries
+	#!# Generalise and move to timedate.php
+	private function expandDateRanges ($events, $fromStartDate = false, $untilEndDate = false)
+	{
+		# Loop through each event entry and expand it if required
+		foreach ($events as $eventId => $event) {
+			
+			# If the event is a one-day event, take no further action
+			if ($event['startDate'] == $event['endDate']) {continue;}
+			
+			# Determine the latest entry date that a clone may have (e.g. if the listing shows only September 2014, but the event's end date is 12th October 2014, then the last entry date is 30th September 2014
+			$lastEntryDate = min ($event['endDate'], $untilEndDate);
+			
+			# Expand each date by advancing it and cloning
+			$i = 0;
+			while ($event['entryDate'] != $lastEntryDate) {
+				
+				# Assign a namespaced clone ID
+				$eventIdClone = $eventId . '_' . $i;
+				
+				# Advance to the following day
+				$event['entryDate'] = date ('Y-m-d', strtotime ($event['entryDate'] . ' + 1 day'));
+				
+				# Create a formatted version of the entry date
+				$event['entryDateFormatted'] = date ('l jS F, Y', strtotime ($event['entryDate']));	// Equivalent of '%W %D %M, %Y', which creates e.g. "Tuesday 1st October, 2013"
+				
+				# If the event entry specifies only certain days should be included, then limit to those days
+				if ($event['daysOfWeek']) {
+					$dayOfWeek = date ('l', strtotime ($event['entryDate']));	// 'l' is "Sunday through Saturday"
+					$daysOfWeek = explode (',', $event['daysOfWeek']);
+					if (!in_array ($dayOfWeek, $daysOfWeek)) {
+						continue;
+					}
+				}
+				
+				# Capture and register the clone, having the new day
+				$events[$eventIdClone] = $event;
+				
+				# Advance the counter, retaining the modified entryDate for the next iteration
+				$i++;
+			}
+		}
+		
+		# Return the expanded data
+		return $events;
 	}
 	
 	
@@ -1506,6 +1558,8 @@ if ($this->settings['organisationsMode']) {
 				DATE_FORMAT(events.startTime,'%l.%i%p') AS startTimeFormatted,
 				DATE_FORMAT(events.endDate, IF ( (DATE_FORMAT(events.startDate, '%Y') = DATE_FORMAT(events.endDate, '%Y')), '%W %D %M', '%W %D %M, %Y' ) ) AS endDateFormatted,
 				DATE_FORMAT(events.endTime,'%l.%i%p') AS endTimeFormatted,
+				GREATEST(events.startDate, '{$fromStartDate}') AS entryDate,
+				DATE_FORMAT( GREATEST(events.startDate, '{$fromStartDate}') ,'%W %D %M, %Y') AS entryDateFormatted,		/* Note that expandDateRanges() also has a PHP equivalent of the date format */
 				IF((  (endDate = '') || (endDate IS NULL) || (endDate = startDate) || ((DATEDIFF(endDate,startDate) = 1) && (DATE_FORMAT(events.endTime,'%l') <= 7))  ), 1, 0) AS sameDay,
 				IF((endDate < CAST(NOW() as DATE)), 1, 0) AS isRetrospective,
 				IF((startDate = CAST(NOW() as DATE)), 1, 0) AS isToday,
@@ -1521,7 +1575,7 @@ if ($this->settings['organisationsMode']) {
 			/* General */
 				. ($ensureNotDeleted ? " AND (events.deleted = '' OR events.deleted IS NULL)" : '')
 				. ($eventId ? " AND eventId = '" . addslashes ($eventId) . "'" : '')
-				. ($forthcomingOnly ? " AND CAST(NOW() as DATE) <= startDate " : '')
+				. ($forthcomingOnly ? " AND ( (startDate >= CURDATE()) OR (startDate < CURDATE() AND endDate >= CURDATE()) ) " : '')
 			/* Event types */
 				. ($eventType ? " AND eventType__JOIN__{$this->settings['database']}__types__reserved = '" . addslashes ($eventType) . "'" : '')
 			/* Date ranges */
