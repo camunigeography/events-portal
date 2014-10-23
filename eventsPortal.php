@@ -1138,6 +1138,13 @@ if ($this->settings['organisationsMode']) {
 		# Process the form
 		$result = $form->process ($html);
 		
+		# If there is no end date, clone the start date
+		if ($result) {
+			if (!$result['endDate']) {
+				$result['endDate'] = $result['startDate'];
+			}
+		}
+		
 		# Return the result
 		return $result;
 	}
@@ -1495,7 +1502,7 @@ if ($this->settings['organisationsMode']) {
 				DATE_FORMAT(events.endDate, IF ( (DATE_FORMAT(events.startDate, '%Y') = DATE_FORMAT(events.endDate, '%Y')), '%W %D %M', '%W %D %M, %Y' ) ) AS endDateFormatted,
 				DATE_FORMAT(events.endTime,'%l.%i%p') AS endTimeFormatted,
 				IF((  (endDate = '') || (endDate IS NULL) || (endDate = startDate) || ((DATEDIFF(endDate,startDate) = 1) && (DATE_FORMAT(events.endTime,'%l') <= 7))  ), 1, 0) AS sameDay,
-				IF((startDate < CAST(NOW() as DATE)), 1, 0) AS isRetrospective,
+				IF((endDate < CAST(NOW() as DATE)), 1, 0) AS isRetrospective,
 				IF((startDate = CAST(NOW() as DATE)), 1, 0) AS isToday,
 				IF((startDate = DATE_ADD(CAST(NOW() as DATE), INTERVAL 1 DAY)), 1, 0) AS isTomorrow,
 				UNIX_TIMESTAMP(lastUpdated) as lastUpdated,
