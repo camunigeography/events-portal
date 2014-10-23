@@ -1191,7 +1191,7 @@ if ($this->settings['organisationsMode']) {
 		
 		# Get the events for this range
 		if (!$data = $this->getEvents (false, false, false, false, $forthcomingOnly = false, true, $dateRange['startDate'], $dateRange['endDate'])) {
-			$html .= "\n<p>There were no events for {$monthsByYear[$selectedYear][$selectedMonth]}.</p>";
+			$html .= "\n<p>There were no events for {$dateRange['selectionAsString']}.</p>";
 			echo $html;
 			return;
 		}
@@ -1256,8 +1256,11 @@ if ($this->settings['organisationsMode']) {
 		$startDate = $selectedYear . '-' . $selectedMonth . '-' . '01';
 		$endDate = $selectedYear . '-' . $selectedMonth . '-' . cal_days_in_month (CAL_GREGORIAN, $selectedMonth, $selectedYear);
 		
+		# Create a formatted version of the selected month and year, e.g. "May, 2014"
+		$selectionAsString = $monthsByYear[$selectedYear][$selectedMonth];
+		
 		# Return the list
-		return array ('startDate' => $startDate, 'endDate' => $endDate);
+		return array ('startDate' => $startDate, 'endDate' => $endDate, 'selectionAsString' => $selectionAsString);
 	}
 	
 	
