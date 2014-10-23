@@ -1226,10 +1226,6 @@ if ($this->settings['organisationsMode']) {
 		# Construct a date range for the listing
 		$startDate = $selectedYear . '-' . $selectedMonth . '-' . '01';
 		$endDate = $selectedYear . '-' . $selectedMonth . '-' . cal_days_in_month (CAL_GREGORIAN, $selectedMonth, $selectedYear);
-		$today = date ('Y-m-d');
-		if ($endDate > $today) {
-			$endDate = $today;
-		};
 		
 		# Get the events for this range
 		if (!$data = $this->getEvents (false, false, false, false, $forthcomingOnly = false, true, $startDate, $endDate)) {
@@ -1492,6 +1488,15 @@ if ($this->settings['organisationsMode']) {
 	# Function to retrieve a list of events from the database
 	private function getEvents ($providerId = false, $organisationId = false, $eventId = false, $eventType = false, $forthcomingOnly = true, $ensureNotDeleted = true, $fromStartDate = false, $untilEndDate = false)
 	{
+		# Determine any date constraints SQL
+		$dateConstraintsSql = '';
+		if ($fromStartDate && $untilEndDate) {
+			$dateConstraintsSql .= " AND (startDate <= '{$untilEndDate}') AND (endDate >= '{$fromStartDate}')";		// Uses Overlapping date ranges algorithm at: http://stackoverflow.com/a/325964
+		} else {
+			$dateConstraintsSql .= ($fromStartDate ? " AND startDate >= '{$fromStartDate}'" : '');
+			$dateConstraintsSql .= ($untilEndDate ? " AND endDate <= '{$untilEndDate}'" : '');
+		}
+		
 		# Construct the query
 		#!# Migrate addslashes to prepared statements
 		$query = "SELECT
@@ -1520,8 +1525,7 @@ if ($this->settings['organisationsMode']) {
 			/* Event types */
 				. ($eventType ? " AND eventType__JOIN__{$this->settings['database']}__types__reserved = '" . addslashes ($eventType) . "'" : '')
 			/* Date ranges */
-				 . ($fromStartDate ? " AND startDate >= '{$fromStartDate}'" : '')
-				 . ($untilEndDate ? " AND startDate <= '{$untilEndDate}'" : '')		/* Currently assumes single-day events */
+				. ($dateConstraintsSql)
 			/* Match the provider and organisation */
 				. ($providerId ? " AND provider = '" . addslashes ($providerId) . "'" : '')
 				. ($organisationId ? " AND organisation = '" . addslashes ($organisationId) . "'" : '') . "
