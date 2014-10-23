@@ -1205,11 +1205,11 @@ if ($this->settings['organisationsMode']) {
 	
 	
 	# Function to select a date range
-	private function selectDateRange (&$html = '', $startDate, $endDate = false, $reverseOrdering = true)
+	private function selectDateRange (&$html = '', $startDate)
 	{
 		# Get all months since the earliest date
 		require_once ('timedate.php');
-		$monthsByYear = timedate::getMonthsByYear ($startDate, $endDate, $reverseOrdering);
+		$monthsByYear = timedate::getMonthsByYear ($startDate, false, true);
 		
 		# Determine if a year and month have been requested, and that they are valid
 		$selectedYear = false;
@@ -1230,7 +1230,7 @@ if ($this->settings['organisationsMode']) {
 		foreach ($monthsByYear as $year => $months) {
 			$monthsList = array ();
 			foreach ($months as $month => $monthYearString) {
-				$url = "{$this->baseUrl}/archive/{$year}/{$month}/";
+				$url = "{$this->baseUrl}/in/{$year}/{$month}/";
 				$monthsList[] = "<a href=\"{$url}\">{$monthYearString}</a>";
 				$jumplist[$url] = $monthYearString;
 				if (($year == $selectedYear) && ($month == $selectedMonth)) {
