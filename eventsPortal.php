@@ -1497,7 +1497,10 @@ if ($this->settings['organisationsMode']) {
 			if ($event['startDate'] == $event['endDate']) {continue;}
 			
 			# Determine the latest entry date that a clone may have (e.g. if the listing shows only September 2014, but the event's end date is 12th October 2014, then the last entry date is 30th September 2014
-			$lastEntryDate = min ($event['endDate'], $untilEndDate);
+			$lastEntryDate = $event['endDate'];
+			if ($untilEndDate) {
+				$lastEntryDate = min ($event['endDate'], $untilEndDate);
+			}
 			
 			# Expand each date by advancing it and cloning
 			$i = 0;
