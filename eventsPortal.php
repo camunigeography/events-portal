@@ -1196,7 +1196,7 @@ if ($this->settings['organisationsMode']) {
 		}
 		
 		# Render the events as a listing table
-		$html .= $this->renderEventsListingTable ($data, $dateRange['startDate'], $dateRange['endDate']);
+		$html .= $this->renderEventsListingTable ($data, false, $dateRange['startDate'], $dateRange['endDate']);
 		
 		# Show the HTML
 		echo $html;
@@ -1414,7 +1414,7 @@ if ($this->settings['organisationsMode']) {
 		}
 		
 		# Render the events as a listing table
-		$html .= $this->renderEventsListingTable ($data);
+		$html .= $this->renderEventsListingTable ($data, $organisation);
 		
 		# Give a permalink to the events page
 		if ($organisation && !$organisationStandalonePage) {
@@ -1437,7 +1437,7 @@ if ($this->settings['organisationsMode']) {
 	
 	
 	# Function to render the events listing table
-	private function renderEventsListingTable ($data, $fromStartDate = false, $untilEndDate = false)
+	private function renderEventsListingTable ($data, $organisation = false, $fromStartDate = false, $untilEndDate = false)
 	{
 		# Start the HTML
 		$html = '';
