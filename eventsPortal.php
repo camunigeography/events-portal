@@ -12,7 +12,6 @@
 
 #!#  iCal export
 #!#  Map panel for locations
-#!#  Events over several days
 #!#  Event recurrence - see:   http://mywebland.com/forums/showtopic.php?p=3806   http://forums.devx.com/showthread.php?threadid=136165   http://archives.postgresql.org/pgsql-sql/2002-08/msg00302.php
 #!#  Admins to get to old events
 #!#  Export as a proper CSV file, not an HTML table shown on the page
@@ -1490,6 +1489,9 @@ if ($this->settings['organisationsMode']) {
 	#!# Generalise and move to timedate.php
 	private function expandDateRanges ($events, $fromStartDate = false, $untilEndDate = false)
 	{
+		# Clone the original events list
+		$eventsExpanded = $events;
+		
 		# Loop through each event entry and expand it if required
 		foreach ($events as $eventId => $event) {
 			
@@ -1525,15 +1527,37 @@ if ($this->settings['organisationsMode']) {
 				$event['entryDateFormatted'] = date ('l jS F, Y', strtotime ($event['entryDate']));	// Equivalent of '%W %D %M, %Y', which creates e.g. "Tuesday 1st October, 2013"
 				
 				# Capture and register the clone, having the new day
-				$events[$eventIdClone] = $event;
+				$eventsExpanded[$eventIdClone] = $event;
 				
 				# Advance the counter, retaining the modified entryDate for the next iteration
 				$i++;
 			}
 		}
 		
+		# Truncate past dates, now that the range has been expanded; in an unexpanded mode they would be required as their range starts before the present day and continues into the present day; in expanded mode, they can be truncated exactly
+		foreach ($eventsExpanded as $eventId => $event) {
+			if ($event['entryDate'] < date ('Y-m-d')) {
+				unset ($eventsExpanded[$eventId]);
+			}
+		}
+		
+		# Add a virtual time sorting field to each event
+		foreach ($eventsExpanded as $eventId => $event) {
+			$startTime = ($event['startTime'] ? $event['startTime'] : '00:00:00');	// Put all-day events before timed events in the listing
+			$startDateTime = $event['entryDate'] . ' ' . $startTime;
+			$eventsExpanded[$eventId]['_startTime'] = strtotime ($startDateTime);
+		}
+		
+		# Re-order by entryDate, since the clones will have been inserted at the end of the original list, as clumps for each event
+		$eventsExpanded = application::natsortField ($eventsExpanded, '_startTime');
+		
+		# Remove the virtual time sorting field
+		foreach ($eventsExpanded as $eventId => $event) {
+			unset ($eventsExpanded[$eventId]['_startTime']);
+		}
+		
 		# Return the expanded data
-		return $events;
+		return $eventsExpanded;
 	}
 	
 	
