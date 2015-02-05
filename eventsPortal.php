@@ -1512,9 +1512,6 @@ if ($this->settings['organisationsMode']) {
 				# Advance to the following day
 				$event['entryDate'] = date ('Y-m-d', strtotime ($event['entryDate'] . ' + 1 day'));
 				
-				# Create a formatted version of the entry date
-				$event['entryDateFormatted'] = date ('l jS F, Y', strtotime ($event['entryDate']));	// Equivalent of '%W %D %M, %Y', which creates e.g. "Tuesday 1st October, 2013"
-				
 				# If the event entry specifies only certain days should be included, then limit to those days
 				if ($event['daysOfWeek']) {
 					$dayOfWeek = date ('l', strtotime ($event['entryDate']));	// 'l' is "Sunday through Saturday"
@@ -1523,6 +1520,9 @@ if ($this->settings['organisationsMode']) {
 						continue;
 					}
 				}
+				
+				# Create a formatted version of the entry date
+				$event['entryDateFormatted'] = date ('l jS F, Y', strtotime ($event['entryDate']));	// Equivalent of '%W %D %M, %Y', which creates e.g. "Tuesday 1st October, 2013"
 				
 				# Capture and register the clone, having the new day
 				$events[$eventIdClone] = $event;
