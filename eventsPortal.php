@@ -163,7 +163,7 @@ class eventsPortal extends frontControllerApplication
 		);
 		
 		# Overwrite global settings
-		$this->globalActions['home']['tab'] = 'Listing of all events';
+		$this->globalActions['home']['tab'] = 'Forthcoming events';
 		$this->globalActions['home']['icon'] = 'application_view_icons';
 		
 		# Add in external provider links
