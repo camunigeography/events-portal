@@ -1485,6 +1485,11 @@ if ($this->settings['organisationsMode']) {
 			$html .= $this->settings['specialNoticeHtml'];
 		}
 		
+		# Show a date selection control to enable jumping to a forthcoming month
+		$html .= "\n<div class=\"graybox\">";
+		$html .= $this->monthIndexDroplist ($this->monthsByYear (), date ('Y'), date ('m'));
+		$html .= "\n</div>";
+		
 		# End if no events
 		if (!$data) {
 			$html .= "\n<p>There are no forthcoming " . ($eventType ? '<strong>' . htmlspecialchars ($eventTypes[$eventType]) . '</strong>' : '') . ' events registered.</p>';
