@@ -74,6 +74,7 @@ class eventsPortal extends frontControllerApplication
 			# Events
 			'eventsOnProviderPage' => 4,
 			'eventsMaxInFeed' => 20,
+			'eventsOnMainPageLimit' => 100,
 			
 			# Auth
 			'internalAuth' => false,
@@ -324,7 +325,14 @@ class eventsPortal extends frontControllerApplication
 		}
 		
 		# Show the list including navigation links
-		$html .= $this->eventsList (false, false, false, $eventType);
+		$html .= $this->eventsList (false, false, false, $eventType, $terminatedEarlyDate);
+		
+		# Show future months if the list has been terminated early
+		if ($terminatedEarlyDate) {
+			$html .= "\n<h2 id=\"furtherahead\">Further ahead</h2>";
+			$monthsToList = $this->monthsByYear ($terminatedEarlyDate, $truncateAtToday = false, false);
+			$html .= $this->monthIndexListing ($monthsToList);
+		}
 		
 		# Show the HTML
 		echo $html;
@@ -1195,7 +1203,7 @@ if ($this->settings['organisationsMode']) {
 		$html .= "\n<h2>" . ($this->monthYearIsForthcoming ? 'Forthcoming events' : 'Archive of previous events') . '</h2>';
 		
 		# Create a droplist of the archive months
-		$monthsToList = ($this->monthYearIsForthcoming ? $monthsByYear : $this->monthsByYear (true));
+		$monthsToList = ($this->monthYearIsForthcoming ? $monthsByYear : $this->monthsByYear (false, true));
 		$html .= $this->monthIndexDroplist ($monthsToList, $selected['year'], $selected['month']);
 		
 		# If no month/year are selected, create a listing of the archive months, and end at this point
@@ -1241,15 +1249,15 @@ if ($this->settings['organisationsMode']) {
 	
 	
 	# Function to get months by year
-	private function monthsByYear ($truncateAtToday = false)
+	private function monthsByYear ($startDate = false /* i.e. earliest by default */, $truncateAtToday = false, $reverseOrdering = true)
 	{
 		# Get the date of the earliest event and the latest-ending date
-		$earliestDate = $this->getEarliestEventDate ();
+		$earliestDate = ($startDate ? $startDate : $this->getEarliestEventDate ());
 		$latestDate = ($truncateAtToday ? false /* i.e. today */ : $this->getLatestEventDate ());
 		
 		# Get all months since the earliest event date
 		require_once ('timedate.php');
-		$monthsByYear = timedate::getMonthsByYear ($earliestDate, $latestDate, $reverseOrdering = true);
+		$monthsByYear = timedate::getMonthsByYear ($earliestDate, $latestDate, $reverseOrdering);
 		
 		# Return the dates
 		return $monthsByYear;
@@ -1413,7 +1421,7 @@ if ($this->settings['organisationsMode']) {
 	
 	# Function to list upcoming events; NB this is a public API call; external applications can include listings
 	#!# $organisation (as an array) is currently assumed to have all its values converted to HTML entities - need to do this internally here instead
-	public function eventsList ($providerId, $organisation = false, $organisationStandalonePage = false, $eventType = false)
+	public function eventsList ($providerId, $organisation = false, $organisationStandalonePage = false, $eventType = false, &$terminatedEarlyDate = false)
 	{
 		# Start the HTML
 		$html  = '';
@@ -1506,7 +1514,7 @@ if ($this->settings['organisationsMode']) {
 		
 		# Render the events as a listing table
 		$today = date ('Y-m-d');
-		$html .= $this->renderEventsListingTable ($data, $organisation, $fromStartDate = $today, $untilEndDate = false);
+		$html .= $this->renderEventsListingTable ($data, $organisation, $fromStartDate = $today, $untilEndDate = false, $terminatedEarlyDate);
 		
 		# Give a permalink to the events page
 		if ($organisation && !$organisationStandalonePage) {
@@ -1529,7 +1537,7 @@ if ($this->settings['organisationsMode']) {
 	
 	
 	# Function to render the events listing table
-	private function renderEventsListingTable ($data, $organisation = false, $fromStartDate = false, $untilEndDate = false)
+	private function renderEventsListingTable ($data, $organisation = false, $fromStartDate = false, $untilEndDate = false, &$terminatedEarlyDate = false)
 	{
 		# Start the HTML
 		$html = '';
@@ -1546,6 +1554,16 @@ if ($this->settings['organisationsMode']) {
 		# Compile the data into a table
 		$organisationBaseUrls = array ();
 		foreach ($data as $date => $thatDaysEvents) {
+			
+			# End if the maximum has been reached on the main page, noting the date of the event which would otherwise be shown next
+			if (!$organisation) {
+				if ($counter > $this->settings['eventsOnMainPageLimit']) {
+					$terminatedEarlyDate = $date;
+					break;
+				}
+			}
+			
+			# Add each event, incrementing the counter
 			$counter += count ($thatDaysEvents);
 			$table = array ();
 			foreach ($thatDaysEvents as $eventId => $event) {
