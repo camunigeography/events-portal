@@ -1278,7 +1278,7 @@ if ($this->settings['organisationsMode']) {
 	
 	
 	# Function to create a droplist, linking to each month/year
-	private function monthIndexDroplist ($monthsByYear, $selectedYear, $selectedMonth)
+	private function monthIndexDroplist ($monthsByYear, $selectedYear, $selectedMonth, $introductoryText = 'View month: ')
 	{
 		# Determine the entries
 		$jumplist = array ();
@@ -1294,7 +1294,7 @@ if ($this->settings['organisationsMode']) {
 		
 		# Compile the HTML
 		#!# Would be nice if htmlJumplist had nesting support, so that years can be appear nested
-		$html = pureContent::htmlJumplist ($jumplist, $currentYearMonthUrl, false, $name = 'month', $parentTabLevel = 0, $class = 'jumplist', $introductoryText = 'View month: ');
+		$html = pureContent::htmlJumplist ($jumplist, $currentYearMonthUrl, false, $name = 'month', $parentTabLevel = 0, $class = 'jumplist', $introductoryText);
 		
 		# Return the HTML
 		return $html;
@@ -1488,7 +1488,7 @@ if ($this->settings['organisationsMode']) {
 		
 		# Show a date selection control to enable jumping to a forthcoming month
 		$html .= "\n<div class=\"graybox\">";
-		$html .= $this->monthIndexDroplist ($this->monthsByYear (), date ('Y'), date ('m'));
+		$html .= $this->monthIndexDroplist ($this->monthsByYear (), date ('Y'), date ('m'), 'Jump to month: ');
 		$html .= "\n</div>";
 		
 		# End if no events
