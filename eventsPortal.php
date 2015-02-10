@@ -1222,32 +1222,12 @@ if ($this->settings['organisationsMode']) {
 			}
 		}
 		
-		# Create a listing and a droplist
-		$listingHtml  = '';
-		$jumplist = array ();
-		$currentYearMonthUrl = false;
-		foreach ($monthsByYear as $year => $months) {
-			$monthsList = array ();
-			foreach ($months as $month => $monthYearString) {
-				$url = "{$this->baseUrl}/in/{$year}/{$month}/";
-				$monthsList[] = "<a href=\"{$url}\">{$monthYearString}</a>";
-				$jumplist[$url] = $monthYearString;
-				if (($year == $selectedYear) && ($month == $selectedMonth)) {
-					$currentYearMonthUrl = $url;
-				}
-			}
-			$listingHtml .= "\n<h3>{$year}</h3>";
-			$listingHtml .= application::htmlUl ($monthsList);
-		}
-		#!# Would be nice if htmlJumplist had nesting support, so that years can be appear nested
-		$jumplistHtml = pureContent::htmlJumplist ($jumplist, $currentYearMonthUrl, false, $name = 'month', $parentTabLevel = 0, $class = 'jumplist', $introductoryText = 'View month: ');
-		
-		# Show the jumplist
-		$html .= $jumplistHtml;
+		# Create a droplist
+		$html .= $this->monthIndexDroplist ($monthsByYear, $selectedYear, $selectedMonth);
 		
 		# If on the front page, create the listing and end
-		if (!$currentYearMonthUrl) {
-			$html .= $listingHtml;
+		if (!$selectedMonth && !$selectedYear) {	#!# Could later be amended to show a months-in-year listing
+			$html .= $this->monthIndexListing ($monthsByYear);
 			return false;
 		}
 		
@@ -1260,6 +1240,59 @@ if ($this->settings['organisationsMode']) {
 		
 		# Return the list
 		return array ('startDate' => $startDate, 'endDate' => $endDate, 'selectionAsString' => $selectionAsString);
+	}
+	
+	
+	# Function to create a droplist, linking to each month/year
+	private function monthIndexDroplist ($monthsByYear, $selectedYear, $selectedMonth)
+	{
+		# Determine the entries
+		$jumplist = array ();
+		foreach ($monthsByYear as $year => $months) {
+			foreach ($months as $month => $monthYearString) {
+				$url = $this->monthYearUrlPath ($year, $month);
+				$jumplist[$url] = $monthYearString;
+			}
+		}
+		
+		# Determine the current entry
+		$currentYearMonthUrl = ($selectedYear && $selectedMonth ? $this->monthYearUrlPath ($selectedYear, $selectedMonth) : false);
+		
+		# Compile the HTML
+		#!# Would be nice if htmlJumplist had nesting support, so that years can be appear nested
+		$html = pureContent::htmlJumplist ($jumplist, $currentYearMonthUrl, false, $name = 'month', $parentTabLevel = 0, $class = 'jumplist', $introductoryText = 'View month: ');
+		
+		# Return the HTML
+		return $html;
+	}
+	
+	
+	# Function to create a index listing, linking to each month/year
+	private function monthIndexListing ($monthsByYear)
+	{
+		# Start the HTML
+		$html = '';
+		
+		# Create a listing if required
+		foreach ($monthsByYear as $year => $months) {
+			$monthsList = array ();
+			foreach ($months as $month => $monthYearString) {
+				$url = $this->monthYearUrlPath ($year, $month);
+				$monthsList[] = "<a href=\"{$url}\">{$monthYearString}</a>";
+			}
+			$html .= "\n<h3>{$year}</h3>";
+			$html .= application::htmlUl ($monthsList);
+		}
+		
+		# Return the HTML
+		return $html;
+	}
+	
+	
+	# Function to convert a month and year to a URL path
+	private function monthYearUrlPath ($year, $month)
+	{
+		return "{$this->baseUrl}/in/{$year}/{$month}/";
 	}
 	
 	
