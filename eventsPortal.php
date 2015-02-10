@@ -49,6 +49,7 @@ class eventsPortal extends frontControllerApplication
 			
 			# GUI
 			'div' => 'eventsportal',
+			'page404' => false,
 			
 			# Branding and configuration
 			'applicationName' => 'Events',
@@ -1176,70 +1177,64 @@ if ($this->settings['organisationsMode']) {
 		# Get the date of the earliest event
 		$startDate = $this->getEarliestEventDate ();
 		
-		# Select the date, or if none selected, show the date selection controls
-		$dateRange = $this->selectDateRange ($dateSelectionHtml, $startDate);
+		# Get all months since the earliest event date
+		require_once ('timedate.php');
+		$monthsByYear = timedate::getMonthsByYear ($startDate, $endDate = false, $reverseOrdering = true);
 		
-		# Show the date selection control
-		$html .= $dateSelectionHtml;
-		
-		# If no date range selected, end at this point
-		if (!$dateRange) {
+		# Determine if a year and month have been requested, and that they are valid
+		if (!$selected = $this->validYearMonthUrl ($monthsByYear)) {
+			$html = $this->page404 ();
 			echo $html;
-			return;
+			return false;
 		}
 		
+		# Create a droplist
+		$html .= $this->monthIndexDroplist ($monthsByYear, $selected['year'], $selected['month']);
+		
+		# If on the front page, create the listing and end
+		if (!$selected['year'] && !$selected['month']) {	#!# Could later be amended to show a months-in-year listing
+			$html .= $this->monthIndexListing ($monthsByYear);
+			echo $html;
+			return false;
+		}
+		
+		# Construct a date range for the listing
+		$startDate = $selected['year'] . '-' . $selected['month'] . '-' . '01';
+		$endDate = $selected['year'] . '-' . $selected['month'] . '-' . cal_days_in_month (CAL_GREGORIAN, $selected['month'], $selected['year']);
+		
 		# Get the events for this range
-		if (!$data = $this->getEvents (false, false, false, false, $forthcomingOnly = false, true, $dateRange['startDate'], $dateRange['endDate'])) {
-			$html .= "\n<p>There were no events for {$dateRange['selectionAsString']}.</p>";
+		if (!$data = $this->getEvents (false, false, false, false, $forthcomingOnly = false, true, $startDate, $endDate)) {
+			$html .= "\n<p>There were no events for {$monthsByYear[$selected['year']][$selected['month']]}.</p>";
 			echo $html;
 			return;
 		}
 		
 		# Render the events as a listing table
-		$html .= $this->renderEventsListingTable ($data, false, $dateRange['startDate'], $dateRange['endDate']);
+		$html .= $this->renderEventsListingTable ($data, false, $startDate, $endDate);
 		
 		# Show the HTML
 		echo $html;
 	}
 	
 	
-	# Function to select a date range
-	private function selectDateRange (&$html = '', $startDate)
+	# Function to validate a URL-specified year and month
+	private function validYearMonthUrl ($monthsByYear)
 	{
-		# Get all months since the earliest date
-		require_once ('timedate.php');
-		$monthsByYear = timedate::getMonthsByYear ($startDate, false, true);
+		# Obtain the values
+		$year = (isSet ($_GET['year']) ? $_GET['year'] : false);
+		$month = (isSet ($_GET['month']) ? $_GET['month'] : false);
+		$selected = array ('year' => $year, 'month' => $month);
 		
-		# Determine if a year and month have been requested, and that they are valid
-		$selectedYear = false;
-		$selectedMonth = false;
-		if (isSet ($_GET['year']) || isSet ($_GET['month'])) {
-			$selectedYear = (isSet ($_GET['year']) ? $_GET['year'] : false);
-			$selectedMonth = (isSet ($_GET['month']) ? $_GET['month'] : false);
-			if (!$selectedYear || !$selectedMonth || !isSet ($monthsByYear[$selectedYear]) || !isSet ($monthsByYear[$selectedYear][$selectedMonth])) {
-				$html = $this->page404 ();
-				return false;
-			}
+		# Valid if no year/month supplied
+		if (!$year && !$month) {return $selected;}
+		
+		# Check if supplied
+		if ($year && $month && isSet ($monthsByYear[$year]) && isSet ($monthsByYear[$year][$month])) {
+			return $selected;
 		}
 		
-		# Create a droplist
-		$html .= $this->monthIndexDroplist ($monthsByYear, $selectedYear, $selectedMonth);
-		
-		# If on the front page, create the listing and end
-		if (!$selectedMonth && !$selectedYear) {	#!# Could later be amended to show a months-in-year listing
-			$html .= $this->monthIndexListing ($monthsByYear);
-			return false;
-		}
-		
-		# Construct a date range for the listing
-		$startDate = $selectedYear . '-' . $selectedMonth . '-' . '01';
-		$endDate = $selectedYear . '-' . $selectedMonth . '-' . cal_days_in_month (CAL_GREGORIAN, $selectedMonth, $selectedYear);
-		
-		# Create a formatted version of the selected month and year, e.g. "May, 2014"
-		$selectionAsString = $monthsByYear[$selectedYear][$selectedMonth];
-		
-		# Return the list
-		return array ('startDate' => $startDate, 'endDate' => $endDate, 'selectionAsString' => $selectionAsString);
+		# Invalid
+		return false;
 	}
 	
 	
