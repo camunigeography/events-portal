@@ -1414,7 +1414,8 @@ if ($this->settings['organisationsMode']) {
 		}
 		
 		# Render the events as a listing table
-		$html .= $this->renderEventsListingTable ($data, $organisation);
+		$today = date ('Y-m-d');
+		$html .= $this->renderEventsListingTable ($data, $organisation, $fromStartDate = $today, $untilEndDate = false);
 		
 		# Give a permalink to the events page
 		if ($organisation && !$organisationStandalonePage) {
@@ -1536,7 +1537,7 @@ if ($this->settings['organisationsMode']) {
 		
 		# Truncate past dates, now that the range has been expanded; in an unexpanded mode they would be required as their range starts before the present day and continues into the present day; in expanded mode, they can be truncated exactly
 		foreach ($eventsExpanded as $eventId => $event) {
-			if ($event['entryDate'] < date ('Y-m-d')) {
+			if ($event['entryDate'] < $fromStartDate) {
 				unset ($eventsExpanded[$eventId]);
 			}
 		}
