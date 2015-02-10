@@ -1486,10 +1486,12 @@ if ($this->settings['organisationsMode']) {
 			$html .= $this->settings['specialNoticeHtml'];
 		}
 		
-		# Show a date selection control to enable jumping to a forthcoming month
-		$html .= "\n<div class=\"graybox\">";
-		$html .= $this->monthIndexDroplist ($this->monthsByYear (), date ('Y'), date ('m'), 'Jump to month: ');
-		$html .= "\n</div>";
+		# Show a date selection control (except when in a type-specific listing) to enable jumping to a forthcoming month
+		if (!$eventType) {
+			$html .= "\n<div class=\"graybox\">";
+			$html .= $this->monthIndexDroplist ($this->monthsByYear (), date ('Y'), date ('m'), 'Jump to month: ');
+			$html .= "\n</div>";
+		}
 		
 		# End if no events
 		if (!$data) {
