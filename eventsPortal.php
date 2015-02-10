@@ -267,6 +267,11 @@ class eventsPortal extends frontControllerApplication
 			$this->providers = $this->providerApi->getProviders ();
 		}
 		
+		# Determine whether any supplied year is archive or future
+		if ($this->monthYearIsForthcoming ()) {
+			$this->tabForced = 'home';
+		}
+		
 	}
 	
 	
@@ -1212,6 +1217,22 @@ if ($this->settings['organisationsMode']) {
 		# Show the HTML
 		echo $html;
 	}
+	
+	
+	# Function to determine if any supplied month/year is forthcoming; this function is optimised to avoid database lookups (as it is run on every page hit) so is simplified
+	private function monthYearIsForthcoming ()
+	{
+		# If year/month not defined, end
+		if (!isSet ($_GET['year']) || !isSet ($_GET['month'])) {return NULL;}
+		
+		# If year/month not validly formatted, end
+		if (!ctype_digit ($_GET['year']) || !ctype_digit ($_GET['month'])) {return NULL;}
+		if ((strlen ($_GET['year']) != 4) || (strlen ($_GET['month']) != 2)) {return NULL;}
+		
+		# Compare
+		return ("{$_GET['year']}{$_GET['month']}" >= date ('Ym'));
+	}
+	
 	
 	
 	# Function to get months by year
