@@ -135,7 +135,7 @@ class eventsPortal extends frontControllerApplication
 				'heading' => false,
 			),
 			'archive' => array (
-				'description' => 'Archive of previous events',
+				'description' => false,
 				'url' => 'archive/',
 				'tab' => 'Previous events',
 				'icon' => 'page_white_copy',
@@ -268,7 +268,7 @@ class eventsPortal extends frontControllerApplication
 		}
 		
 		# Determine whether any supplied year is archive or future
-		if ($this->monthYearIsForthcoming ()) {
+		if ($this->monthYearIsForthcoming = $this->monthYearIsForthcoming ()) {
 			$this->tabForced = 'home';
 		}
 		
@@ -1182,12 +1182,16 @@ if ($this->settings['organisationsMode']) {
 		# Get a list of all months by year
 		$monthsByYear = $this->monthsByYear ();
 		
-		# Determine if a year and month have been requested, and that they are valid
+		# If a year and month have been requested, check that they are valid
 		if (!$selected = $this->validYearMonthUrl ($monthsByYear)) {
 			$html = $this->page404 ();
 			echo $html;
 			return false;
 		}
+		
+		# Set the title based on whether the year/month is forthcoming
+		#!# Ideally the current month should show 'Events this month'
+		$html .= "\n<h2>" . ($this->monthYearIsForthcoming ? 'Forthcoming events' : 'Archive of previous events') . '</h2>';
 		
 		# Create a droplist of the archive months
 		$archiveMonthsByYear = $this->monthsByYear (true);
