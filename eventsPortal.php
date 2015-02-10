@@ -1194,12 +1194,12 @@ if ($this->settings['organisationsMode']) {
 		$html .= "\n<h2>" . ($this->monthYearIsForthcoming ? 'Forthcoming events' : 'Archive of previous events') . '</h2>';
 		
 		# Create a droplist of the archive months
-		$archiveMonthsByYear = $this->monthsByYear (true);
-		$html .= $this->monthIndexDroplist ($archiveMonthsByYear, $selected['year'], $selected['month']);
+		$monthsToList = ($this->monthYearIsForthcoming ? $monthsByYear : $this->monthsByYear (true));
+		$html .= $this->monthIndexDroplist ($monthsToList, $selected['year'], $selected['month']);
 		
 		# If no month/year are selected, create a listing of the archive months, and end at this point
 		if (!$selected['year'] && !$selected['month']) {	#!# Could later be amended to show a months-in-year listing
-			$html .= $this->monthIndexListing ($archiveMonthsByYear);
+			$html .= $this->monthIndexListing ($monthsToList);
 			echo $html;
 			return false;
 		}
