@@ -1849,12 +1849,12 @@ if ($this->settings['organisationsMode']) {
 		
 		$field = "eventType__JOIN__{$this->settings['database']}__types__reserved";
 		$table = array (
-			'Type of event' => "<a href=\"{$this->eventsBaseUrl}/{$event[$field]}/\"><strong>{$event['eventTypeFormatted']} event</strong></a>",
+			'More info' => ($event['webpageUrl'] ? "<a href=\"{$event['webpageUrl']}\" target=\"_blank\"><strong>Event webpage</strong></a>" : false),
+			'Facebook page' => ($event['facebookUrl'] ? "<a href=\"{$event['facebookUrl']}\" target=\"_blank\">" . '<img src="http://static.ak.facebook.com/images/share/facebook_share_icon.gif" alt="[F]" width="16" height="16" border="0" /> Facebook event page</a>' : false),
 			'Open to' => htmlspecialchars ($event['eligibility']),
 			'Cost' => htmlspecialchars ($event['cost']),
 			'Contact' => application::encodeEmailAddress (htmlspecialchars ($event['contactInfo'])),
-			'More info' => ($event['webpageUrl'] ? "<a href=\"{$event['webpageUrl']}\" target=\"_blank\">Event webpage</a>" : false),
-			'Facebook' => ($event['facebookUrl'] ? "<a href=\"{$event['facebookUrl']}\" target=\"_blank\">" . '<img src="http://static.ak.facebook.com/images/share/facebook_share_icon.gif" alt="[F]" width="16" height="16" border="0" /> Facebook event page</a>' : false),
+			'Type of event' => "<a href=\"{$this->eventsBaseUrl}/{$event[$field]}/\">{$event['eventTypeFormatted']} event</a>",
 		);
 		$html .= application::htmlTableKeyed ($table, array (), true, 'lines', $allowHtml = true);
 		
