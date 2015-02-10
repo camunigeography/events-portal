@@ -20,6 +20,7 @@
 #!#  Move feeds to /feeds/
 #!#  Automatic mailshot; configure starting text, e-mail recipient and sending period
 #!#  Event search
+#!#  Add mode to show show *all* dates in the listing rather than merely those containing events
 
 
 # Define a class for creating an online event listing system
