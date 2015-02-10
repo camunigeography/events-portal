@@ -1174,26 +1174,21 @@ if ($this->settings['organisationsMode']) {
 		# Start the HTML
 		$html = '';
 		
-		# Get the date of the earliest event and the latest-ending date
-		$earliestDate = $this->getEarliestEventDate ();
-		$latestDate = $this->getLatestEventDate ();
-		
-		# Get all months since the earliest event date
-		require_once ('timedate.php');
-		$archiveMonthsByYear = timedate::getMonthsByYear ($earliestDate, false /* i.e. today */, $reverseOrdering = true);
-		$allMonthsByYear = timedate::getMonthsByYear ($earliestDate, $latestDate, $reverseOrdering = true);
+		# Get a list of all months by year
+		$monthsByYear = $this->monthsByYear ();
 		
 		# Determine if a year and month have been requested, and that they are valid
-		if (!$selected = $this->validYearMonthUrl ($allMonthsByYear)) {
+		if (!$selected = $this->validYearMonthUrl ($monthsByYear)) {
 			$html = $this->page404 ();
 			echo $html;
 			return false;
 		}
 		
-		# Create a droplist
+		# Create a droplist of the archive months
+		$archiveMonthsByYear = $this->monthsByYear (true);
 		$html .= $this->monthIndexDroplist ($archiveMonthsByYear, $selected['year'], $selected['month']);
 		
-		# If on the front page, create the listing and end
+		# If no month/year are selected, create a listing of the archive months, and end at this point
 		if (!$selected['year'] && !$selected['month']) {	#!# Could later be amended to show a months-in-year listing
 			$html .= $this->monthIndexListing ($archiveMonthsByYear);
 			echo $html;
@@ -1206,7 +1201,7 @@ if ($this->settings['organisationsMode']) {
 		
 		# Get the events for this range
 		if (!$data = $this->getEvents (false, false, false, false, $forthcomingOnly = false, true, $startDate, $endDate)) {
-			$html .= "\n<p>There were no events for {$allMonthsByYear[$selected['year']][$selected['month']]}.</p>";
+			$html .= "\n<p>There were no events for {$monthsByYear[$selected['year']][$selected['month']]}.</p>";
 			echo $html;
 			return;
 		}
@@ -1216,6 +1211,22 @@ if ($this->settings['organisationsMode']) {
 		
 		# Show the HTML
 		echo $html;
+	}
+	
+	
+	# Function to get months by year
+	private function monthsByYear ($truncateAtToday = false)
+	{
+		# Get the date of the earliest event and the latest-ending date
+		$earliestDate = $this->getEarliestEventDate ();
+		$latestDate = ($truncateAtToday ? false /* i.e. today */ : $this->getLatestEventDate ());
+		
+		# Get all months since the earliest event date
+		require_once ('timedate.php');
+		$monthsByYear = timedate::getMonthsByYear ($earliestDate, $latestDate, $reverseOrdering = true);
+		
+		# Return the dates
+		return $monthsByYear;
 	}
 	
 	
