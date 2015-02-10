@@ -1174,26 +1174,28 @@ if ($this->settings['organisationsMode']) {
 		# Start the HTML
 		$html = '';
 		
-		# Get the date of the earliest event
-		$startDate = $this->getEarliestEventDate ();
+		# Get the date of the earliest event and the latest-ending date
+		$earliestDate = $this->getEarliestEventDate ();
+		$latestDate = $this->getLatestEventDate ();
 		
 		# Get all months since the earliest event date
 		require_once ('timedate.php');
-		$monthsByYear = timedate::getMonthsByYear ($startDate, $endDate = false, $reverseOrdering = true);
+		$archiveMonthsByYear = timedate::getMonthsByYear ($earliestDate, false /* i.e. today */, $reverseOrdering = true);
+		$allMonthsByYear = timedate::getMonthsByYear ($earliestDate, $latestDate, $reverseOrdering = true);
 		
 		# Determine if a year and month have been requested, and that they are valid
-		if (!$selected = $this->validYearMonthUrl ($monthsByYear)) {
+		if (!$selected = $this->validYearMonthUrl ($allMonthsByYear)) {
 			$html = $this->page404 ();
 			echo $html;
 			return false;
 		}
 		
 		# Create a droplist
-		$html .= $this->monthIndexDroplist ($monthsByYear, $selected['year'], $selected['month']);
+		$html .= $this->monthIndexDroplist ($archiveMonthsByYear, $selected['year'], $selected['month']);
 		
 		# If on the front page, create the listing and end
 		if (!$selected['year'] && !$selected['month']) {	#!# Could later be amended to show a months-in-year listing
-			$html .= $this->monthIndexListing ($monthsByYear);
+			$html .= $this->monthIndexListing ($archiveMonthsByYear);
 			echo $html;
 			return false;
 		}
@@ -1204,7 +1206,7 @@ if ($this->settings['organisationsMode']) {
 		
 		# Get the events for this range
 		if (!$data = $this->getEvents (false, false, false, false, $forthcomingOnly = false, true, $startDate, $endDate)) {
-			$html .= "\n<p>There were no events for {$monthsByYear[$selected['year']][$selected['month']]}.</p>";
+			$html .= "\n<p>There were no events for {$allMonthsByYear[$selected['year']][$selected['month']]}.</p>";
 			echo $html;
 			return;
 		}
@@ -1296,7 +1298,7 @@ if ($this->settings['organisationsMode']) {
 	{
 		# Get the earliest event that is not deleted
 		$query = "SELECT
-			*
+			startDate
 			FROM {$this->settings['database']}.{$this->settings['table']}
 			WHERE (events.deleted = '' OR events.deleted IS NULL)
 			ORDER BY startDate
@@ -1308,6 +1310,23 @@ if ($this->settings['organisationsMode']) {
 		return $earliestDate;
 	}
 	
+	
+	# Function to get the date of the latest-ending event
+	private function getLatestEventDate ()
+	{
+		# Get the earliest event that is not deleted
+		$query = "SELECT
+			*
+			FROM {$this->settings['database']}.{$this->settings['table']}
+			WHERE (events.deleted = '' OR events.deleted IS NULL)
+			ORDER BY endDate DESC
+			LIMIT 1;
+		";
+		$latestDate = $this->databaseConnection->getOneField ($query, 'endDate');
+		
+		# Return the value
+		return $latestDate;
+	}
 	
 	
 	# Function to produce a listings export
