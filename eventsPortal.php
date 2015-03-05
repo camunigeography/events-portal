@@ -1557,9 +1557,11 @@ if ($this->settings['organisationsMode']) {
 			
 			# End if the maximum has been reached on the main page, noting the date of the event which would otherwise be shown next
 			if (!$organisation) {
-				if ($counter > $this->settings['eventsOnMainPageLimit']) {
-					$terminatedEarlyDate = $date;
-					break;
+				if (!$untilEndDate) {	// I.e. limit to main page only, where infinite expansion would otherwise be possible
+					if ($counter > $this->settings['eventsOnMainPageLimit']) {
+						$terminatedEarlyDate = $date;
+						break;
+					}
 				}
 			}
 			
