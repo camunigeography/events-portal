@@ -1619,7 +1619,7 @@ if ($this->settings['organisationsMode']) {
 			$entryDate = $event['entryDate'];
 			
 			# Add the entry date for this event
-			$eventEntryDates[$eventId][$cloneId] = $entryDate;
+			$eventEntryDates[$entryDate][$cloneId] = $eventId;
 			
 			# If the event is a one-day event, take no further action
 			if ($event['startDate'] == $event['endDate']) {continue;}
@@ -1649,7 +1649,7 @@ if ($this->settings['organisationsMode']) {
 				$cloneId = $eventId . '_' . $i;
 				
 				# Add the entry date for this event
-				$eventEntryDates[$eventId][$cloneId] = $entryDate;
+				$eventEntryDates[$entryDate][$cloneId] = $eventId;
 				
 				# Advance the counter, retaining the modified entryDate for the next iteration
 				$i++;
@@ -1658,8 +1658,8 @@ if ($this->settings['organisationsMode']) {
 		
 		# Create a list representing the expanded version of the events list, seeded from the dates list
 		$eventsExpanded = array ();
-		foreach ($eventEntryDates as $eventId => $eventDates) {
-			foreach ($eventDates as $cloneId => $entryDate) {
+		foreach ($eventEntryDates as $entryDate => $eventDates) {
+			foreach ($eventDates as $cloneId => $eventId) {
 				
 				# Clone the original event
 				$event = $events[$eventId];
