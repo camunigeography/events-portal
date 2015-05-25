@@ -1607,48 +1607,69 @@ if ($this->settings['organisationsMode']) {
 	#!# Generalise and move to timedate.php
 	private function expandDateRanges ($events, $fromStartDate = false, $untilEndDate = false)
 	{
-		# Clone the original events list
-		$eventsExpanded = $events;
-		
-		# Loop through each event entry and expand it if required
+		# Create a seed list of dates, by looping through each event entry and expanding it if required
+		$eventEntryDates = array ();
 		foreach ($events as $eventId => $event) {
+			
+			# Assign a namespaced clone ID
+			$i = 0;
+			$cloneId = $eventId . '_' . $i;
+			
+			# The first entry date is the original entry
+			$entryDate = $event['entryDate'];
+			
+			# Add the entry date for this event
+			$eventEntryDates[$eventId][$cloneId] = $entryDate;
 			
 			# If the event is a one-day event, take no further action
 			if ($event['startDate'] == $event['endDate']) {continue;}
 			
-			# Determine the latest entry date that a clone may have (e.g. if the listing shows only September 2014, but the event's end date is 12th October 2014, then the last entry date is 30th September 2014
+			# Determine the latest entry date that a clone may have; e.g. if the listing shows only September 2014, but the event's end date is 12th October 2014, then the last entry date is 30th September 2014
 			$lastEntryDate = $event['endDate'];
 			if ($untilEndDate) {
 				$lastEntryDate = min ($event['endDate'], $untilEndDate);
 			}
 			
 			# Expand each date by advancing it and cloning
-			$i = 0;
-			while ($event['entryDate'] != $lastEntryDate) {
-				
-				# Assign a namespaced clone ID
-				$eventIdClone = $eventId . '_' . $i;
+			while ($entryDate != $lastEntryDate) {
 				
 				# Advance to the following day
-				$event['entryDate'] = date ('Y-m-d', strtotime ($event['entryDate'] . ' + 1 day'));
+				$entryDate = date ('Y-m-d', strtotime ($entryDate . ' + 1 day'));
 				
 				# If the event entry specifies only certain days should be included, then limit to those days
 				if ($event['daysOfWeek']) {
-					$dayOfWeek = date ('l', strtotime ($event['entryDate']));	// 'l' is "Sunday through Saturday"
+					$dayOfWeek = date ('l', strtotime ($entryDate));	// 'l' is "Sunday through Saturday"
 					$daysOfWeek = explode (',', $event['daysOfWeek']);
 					if (!in_array ($dayOfWeek, $daysOfWeek)) {
 						continue;
 					}
 				}
 				
-				# Create a formatted version of the entry date
-				$event['entryDateFormatted'] = date ('l jS F, Y', strtotime ($event['entryDate']));	// Equivalent of '%W %D %M, %Y', which creates e.g. "Tuesday 1st October, 2013"
+				# Assign a namespaced clone ID
+				$cloneId = $eventId . '_' . $i;
 				
-				# Capture and register the clone, having the new day
-				$eventsExpanded[$eventIdClone] = $event;
+				# Add the entry date for this event
+				$eventEntryDates[$eventId][$cloneId] = $entryDate;
 				
 				# Advance the counter, retaining the modified entryDate for the next iteration
 				$i++;
+			}
+		}
+		
+		# Create a list representing the expanded version of the events list, seeded from the dates list
+		$eventsExpanded = array ();
+		foreach ($eventEntryDates as $eventId => $eventDates) {
+			foreach ($eventDates as $cloneId => $entryDate) {
+				
+				# Clone the original event
+				$event = $events[$eventId];
+				
+				# Amend the entry date and the formatted date
+				$event['entryDate'] = $entryDate;
+				$event['entryDateFormatted'] = date ('l jS F, Y', strtotime ($entryDate));	// Equivalent of '%W %D %M, %Y', which creates e.g. "Tuesday 1st October, 2013"
+				
+				# Register the event
+				$eventsExpanded[$cloneId] = $event;
 			}
 		}
 		
