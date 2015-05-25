@@ -1542,6 +1542,14 @@ if ($this->settings['organisationsMode']) {
 		# Start the HTML
 		$html = '';
 		
+		# Determine whether a count limit is in place, for number of event entries after expansion
+		$countLimit = false;
+		if (!$organisation) {
+			if (!$untilEndDate) {	// I.e. limit to main page only, where infinite expansion would otherwise be possible
+				$countLimit = $this->settings['eventsOnMainPageLimit'];
+			}
+		}
+		
 		# Expand date ranges into separate entries
 		$data = $this->expandDateRanges ($data, $fromStartDate, $untilEndDate);
 		
@@ -1556,12 +1564,10 @@ if ($this->settings['organisationsMode']) {
 		foreach ($data as $date => $thatDaysEvents) {
 			
 			# End if the maximum has been reached on the main page, noting the date of the event which would otherwise be shown next
-			if (!$organisation) {
-				if (!$untilEndDate) {	// I.e. limit to main page only, where infinite expansion would otherwise be possible
-					if ($counter > $this->settings['eventsOnMainPageLimit']) {
-						$terminatedEarlyDate = $date;
-						break;
-					}
+			if ($countLimit) {
+				if ($counter > $this->settings['eventsOnMainPageLimit']) {
+					$terminatedEarlyDate = $date;
+					break;
 				}
 			}
 			
