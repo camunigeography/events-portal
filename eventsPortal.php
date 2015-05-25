@@ -1749,8 +1749,8 @@ if ($this->settings['organisationsMode']) {
 				DATE_FORMAT(events.startTime,'%l.%i%p') AS startTimeFormatted,
 				DATE_FORMAT(events.endDate, IF ( (DATE_FORMAT(events.startDate, '%Y') = DATE_FORMAT(events.endDate, '%Y')), '%W %D %M', '%W %D %M, %Y' ) ) AS endDateFormatted,
 				DATE_FORMAT(events.endTime,'%l.%i%p') AS endTimeFormatted,
-				GREATEST(events.startDate, '{$fromStartDate}') AS entryDate,
-				DATE_FORMAT( GREATEST(events.startDate, '{$fromStartDate}') ,'%W %D %M, %Y') AS entryDateFormatted,		/* Note that expandDateRanges() also has a PHP equivalent of the date format */
+				IF(events.startDate > '{$fromStartDate}', events.startDate, '{$fromStartDate}') AS entryDate,
+				DATE_FORMAT( IF(events.startDate > '{$fromStartDate}', events.startDate, '{$fromStartDate}') ,'%W %D %M, %Y') AS entryDateFormatted,		/* Note that expandDateRanges() also has a PHP equivalent of the date format */
 				IF((  (endDate = '') || (endDate IS NULL) || (endDate = startDate) || ((DATEDIFF(endDate,startDate) = 1) && (DATE_FORMAT(events.endTime,'%l') <= 7))  ), 1, 0) AS sameDay,
 				IF((endDate < CAST(NOW() as DATE)), 1, 0) AS isRetrospective,
 				IF((startDate = CAST(NOW() as DATE)), 1, 0) AS isToday,
