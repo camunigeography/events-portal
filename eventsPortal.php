@@ -1656,6 +1656,13 @@ if ($this->settings['organisationsMode']) {
 			}
 		}
 		
+		# Truncate dates that have passed, now that the range has been expanded; in an unexpanded mode they would be required as their range starts before the present day and continues into the present day; in expanded mode, they can be truncated exactly
+		foreach ($eventEntryDates as $entryDate => $eventDates) {
+			if ($entryDate < $fromStartDate) {
+				unset ($eventEntryDates[$entryDate]);
+			}
+		}
+		
 		# Create a list representing the expanded version of the events list, seeded from the dates list
 		$eventsExpanded = array ();
 		foreach ($eventEntryDates as $entryDate => $eventDates) {
@@ -1670,13 +1677,6 @@ if ($this->settings['organisationsMode']) {
 				
 				# Register the event
 				$eventsExpanded[$cloneId] = $event;
-			}
-		}
-		
-		# Truncate past dates, now that the range has been expanded; in an unexpanded mode they would be required as their range starts before the present day and continues into the present day; in expanded mode, they can be truncated exactly
-		foreach ($eventsExpanded as $eventId => $event) {
-			if ($event['entryDate'] < $fromStartDate) {
-				unset ($eventsExpanded[$eventId]);
 			}
 		}
 		
