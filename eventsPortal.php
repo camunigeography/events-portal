@@ -74,7 +74,7 @@ class eventsPortal extends frontControllerApplication
 			# Events
 			'eventsOnProviderPage' => 4,
 			'eventsMaxInFeed' => 20,
-			'eventsOnMainPageLimit' => 100,
+			'eventsOnMainPageLimit' => 100,		// NB If no limit is set, then there is the possibility of memory overflows if a lot of date ranges
 			
 			# Auth
 			'internalAuth' => false,
@@ -1551,7 +1551,7 @@ if ($this->settings['organisationsMode']) {
 		}
 		
 		# Expand date ranges into separate entries
-		$data = $this->expandDateRanges ($data, $fromStartDate, $untilEndDate);
+		$data = $this->expandDateRanges ($data, $fromStartDate, $untilEndDate, $countLimit);
 		
 		# Regroup by the entry date
 		$data = application::regroup ($data, 'entryDate');
@@ -1605,7 +1605,7 @@ if ($this->settings['organisationsMode']) {
 	
 	# Function to expand date ranges into separate entries
 	#!# Generalise and move to timedate.php
-	private function expandDateRanges ($events, $fromStartDate = false, $untilEndDate = false)
+	private function expandDateRanges ($events, $fromStartDate = false, $untilEndDate = false, $countLimit = false)
 	{
 		# Create a seed list of dates, by looping through each event entry and expanding it if required
 		$eventEntryDates = array ();
@@ -1663,8 +1663,12 @@ if ($this->settings['organisationsMode']) {
 			}
 		}
 		
+		# Reorder by date
+		ksort ($eventEntryDates);
+		
 		# Create a list representing the expanded version of the events list, seeded from the dates list
 		$eventsExpanded = array ();
+		$total = 0;
 		foreach ($eventEntryDates as $entryDate => $eventDates) {
 			foreach ($eventDates as $cloneId => $eventId) {
 				
@@ -1677,6 +1681,13 @@ if ($this->settings['organisationsMode']) {
 				
 				# Register the event
 				$eventsExpanded[$cloneId] = $event;
+			}
+			
+			# If a count limit has been reached, end at this point (which is a complete day)
+			if ($countLimit) {
+				if (count ($eventsExpanded) >= $countLimit) {
+					break ;
+				}
 			}
 		}
 		
