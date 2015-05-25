@@ -1,7 +1,7 @@
 <?php
 
 # Event portal system
-# Version 1.2.0
+# Version 1.2.1
 # 
 # Licence: GPL
 # (c) Martin Lucas-Smith, Cambridge University Students' Union
@@ -1551,7 +1551,7 @@ if ($this->settings['organisationsMode']) {
 		}
 		
 		# Expand date ranges into separate entries
-		$data = $this->expandDateRanges ($data, $fromStartDate, $untilEndDate, $countLimit);
+		$data = $this->expandDateRanges ($data, $fromStartDate, $untilEndDate, $countLimit, $terminatedEarlyDate);
 		
 		# Regroup by the entry date
 		$data = application::regroup ($data, 'entryDate');
@@ -1562,14 +1562,6 @@ if ($this->settings['organisationsMode']) {
 		# Compile the data into a table
 		$organisationBaseUrls = array ();
 		foreach ($data as $date => $thatDaysEvents) {
-			
-			# End if the maximum has been reached on the main page, noting the date of the event which would otherwise be shown next
-			if ($countLimit) {
-				if ($counter > $this->settings['eventsOnMainPageLimit']) {
-					$terminatedEarlyDate = $date;
-					break;
-				}
-			}
 			
 			# Add each event, incrementing the counter
 			$counter += count ($thatDaysEvents);
@@ -1605,7 +1597,7 @@ if ($this->settings['organisationsMode']) {
 	
 	# Function to expand date ranges into separate entries
 	#!# Generalise and move to timedate.php
-	private function expandDateRanges ($events, $fromStartDate = false, $untilEndDate = false, $countLimit = false)
+	private function expandDateRanges ($events, $fromStartDate = false, $untilEndDate = false, $countLimit = false, &$terminatedEarlyDate = false)
 	{
 		# Create a seed list of dates, by looping through each event entry and expanding it if required
 		$eventEntryDates = array ();
@@ -1683,10 +1675,11 @@ if ($this->settings['organisationsMode']) {
 				$eventsExpanded[$cloneId] = $event;
 			}
 			
-			# If a count limit has been reached, end at this point (which is a complete day)
+			# If a count limit has been reached, end at this point
 			if ($countLimit) {
 				if (count ($eventsExpanded) >= $countLimit) {
-					break ;
+					$terminatedEarlyDate = $entryDate;	// Note the date of the event which would otherwise be shown next
+					break;
 				}
 			}
 		}
