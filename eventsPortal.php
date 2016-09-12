@@ -1193,8 +1193,7 @@ if ($this->settings['organisationsMode']) {
 		
 		# If a year and month have been requested, check that they are valid
 		if (!$selected = $this->validYearMonthUrl ($monthsByYear)) {
-			$html = $this->page404 ();
-			echo $html;
+			$this->page404 ();
 			return false;
 		}
 		
