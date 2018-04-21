@@ -8,6 +8,9 @@ $settings = array (
 	'username' => 'the_username',
 	'password' => 'the_password',
 	
+	# API access
+	'apiUsername' => 'api_username_here',
+	
 	# Whether to enable organisations mode (requires providers infrastructure if true)
 	'organisationsMode' => false,
 );

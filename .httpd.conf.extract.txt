@@ -3,7 +3,7 @@
 # Load using:
 #	# Events portal
 #	Include /path/to/events-portal/.httpd.conf.extract
-#	Use MacroEventsPortal /events /path/to/events-portal "/path/to/site/:/path/to/events-portal/:/path/to/php/libraries/"
+#	Use MacroEventsPortal /events "Events" "/path/to/site/:/path/to/events-portal/:/path/to/php/libraries/"
 
 
 <Macro MacroEventsPortal $baseUrl $description $includePath>
