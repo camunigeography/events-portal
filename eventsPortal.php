@@ -663,7 +663,7 @@ class eventsPortal extends frontControllerApplication
 	
 	
 	# Feedback page
-	public function feedback ()
+	public function feedback ($id_ignored = NULL, $error_ignored = NULL, $echoHtml = tru)
 	{
 		# Add a box if required
 		if ($this->settings['faqHtml']) {
