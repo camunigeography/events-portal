@@ -214,7 +214,7 @@ class eventsPortal extends frontControllerApplication
 			  `deleted` int(1) DEFAULT NULL COMMENT 'Event has been deleted?',
 			  `user` varchar(255) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Added/updated by user',
 			  `lastUpdated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Event details last updated',
-			  `submissionTime` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' COMMENT 'Event details original submission date/time',
+			  `submissionTime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Event details original submission date/time',
 			  `cost` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Cost to attend',
 			  `contactInfo` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT 'Contact info (if not main organisation details)',
 			  `webpageUrl` text COLLATE utf8_unicode_ci COMMENT 'URL of webpage about the event (if any)',
