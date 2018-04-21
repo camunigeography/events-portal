@@ -1189,7 +1189,7 @@ if ($this->settings['organisationsMode']) {
 		$html = '';
 		
 		# Get a list of all months by year
-		$monthsByYear = $this->monthsByYear ();
+		$monthsByYear = $this->monthsByYear (false, $truncateAtToday = true);
 		
 		# If a year and month have been requested, check that they are valid
 		if (!$selected = $this->validYearMonthUrl ($monthsByYear)) {
