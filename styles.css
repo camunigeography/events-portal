@@ -13,3 +13,8 @@
 #eventsportal h4.eventslist {color: #603; margin-top: 2.4em;}
 #eventsportal .settings td:first-child {width: 40%;}
 #eventsportal h2#furtherahead {margin-top: 2.2em;}
+
+/* Temp styles to work around UnionConnect styles */
+body ul.tabs2 {line-height: 2.2em;}
+body ul.tabs2 li {white-space: nowrap;}
+body ul.tabs2 img {vertical-align: middle;}
