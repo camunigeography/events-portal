@@ -481,7 +481,7 @@ class eventsPortal extends frontControllerApplication
 		if (!isSet ($_GET['type'])) {return false;}
 		
 		# Ensure the format is supported
-		$supportedFormats = array ('xml', 'js');
+		$supportedFormats = array ('json', 'xml', 'js');
 		if (!in_array ($_GET['type'], $supportedFormats)) {return false;}
 		
 		# Get the organisation name; if the supplied category (e.g. 'arts') or organisation ID is validated, or throw a 404 if it is not found
@@ -547,6 +547,37 @@ class eventsPortal extends frontControllerApplication
 	}
 	
 	
+	# JSON output
+	private function eventsfeedjson ($events, $organisationId = false, $feedDescription)
+	{
+		# Send the correct header
+		header ('Content-Type: application/json');
+		
+		# Remove the last item, which is just advertising to add your event
+		array_pop ($events);
+		
+		# Add the items
+		$feed = array ();
+		foreach ($events as $key => $event) {
+			$feed[] = array (
+				'id' => (int) $key,
+				'title' => $event['eventName'],
+				'url' => "{$_SERVER['REQUEST_SCHEME']}://{$_SERVER['SERVER_NAME']}{$this->eventsBaseUrl}/{$event['eventId']}/{$event['urlSlug']}/",
+				'location' => $event['locationName'],
+				'time' => $event['startTimeFormatted'],
+				'day' => date ('j', strtotime ($event['entryDate'] . ' 12:00:00')),
+				'month' => date ('M', strtotime ($event['entryDate'] . ' 12:00:00')),
+			);
+		}
+		
+		# Encode as JSON
+		$json = json_encode ($feed);
+		
+		# Output the JSON
+		echo $json;
+	}
+	
+	
 	# RSS feeds; RSS spec at http://cyber.law.harvard.edu/rss/rss.html
 	private function eventsfeedxml ($events, $organisationId = false, $feedDescription)
 	{
@@ -595,7 +626,6 @@ class eventsPortal extends frontControllerApplication
 		# Output the XML
 		echo $xml;
 	}
-	
 	
 	
 	# Javascript embeddable page
