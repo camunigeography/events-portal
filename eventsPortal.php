@@ -81,6 +81,10 @@ class eventsPortal extends frontControllerApplication
 			
 			# Whether to enable organisations mode, which uses the providers infrastructure
 			'organisationsMode' => true,
+			
+			# External embedding handling
+			#!# This embedding method needs to be reworked
+			'eventsBaseUrl' => '/events',
 		);
 		
 		# Return the defaults
@@ -258,8 +262,7 @@ class eventsPortal extends frontControllerApplication
 	public function mainPreActions ()
 	{
 		# Explicitly set the eventsBaseUrl
-		#!# Ideally remove this hard-code
-		$this->eventsBaseUrl = '/events';
+		$this->eventsBaseUrl = $this->settings['eventsBaseUrl'];
 		
 		# Get organisation providers if enabled
 		if ($this->settings['organisationsMode']) {
