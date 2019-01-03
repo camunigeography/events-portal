@@ -75,6 +75,7 @@ class eventsPortal extends frontControllerApplication
 			'eventsOnProviderPage' => 4,
 			'eventsMaxInFeed' => 20,
 			'eventsOnMainPageLimit' => 100,		// NB If no limit is set, then there is the possibility of memory overflows if a lot of date ranges
+			'truncateMonths' => false,			// Whether to show the full range of months, or truncate at either end around months having events
 			
 			# Auth
 			'internalAuth' => false,
@@ -1222,7 +1223,7 @@ if ($this->settings['organisationsMode']) {
 		$html = '';
 		
 		# Get a list of all months by year
-		$monthsByYear = $this->monthsByYear (false, $truncateAtToday = true);
+		$monthsByYear = $this->monthsByYear (false, !$this->settings['truncateMonths']);
 		
 		# If a year and month have been requested, check that they are valid
 		if (!$selected = $this->validYearMonthUrl ($monthsByYear)) {
@@ -1235,7 +1236,7 @@ if ($this->settings['organisationsMode']) {
 		$html .= "\n<h2>" . ($this->monthYearIsForthcoming ? 'Forthcoming events' : 'Archive of previous events') . '</h2>';
 		
 		# Create a droplist of the archive months
-		$monthsToList = ($this->monthYearIsForthcoming ? $monthsByYear : $this->monthsByYear (false, true));
+		$monthsToList = ($this->monthYearIsForthcoming ? $monthsByYear : $this->monthsByYear (false, !$this->settings['truncateMonths']));
 		$html .= $this->monthIndexDroplist ($monthsToList, $selected['year'], $selected['month']);
 		
 		# If no month/year are selected, create a listing of the archive months, and end at this point
@@ -1529,7 +1530,7 @@ if ($this->settings['organisationsMode']) {
 		# Show a date selection control (except when in a type-specific listing) to enable jumping to a forthcoming month
 		if (!$eventType) {
 			$html .= "\n<div class=\"graybox\">";
-			$html .= $this->monthIndexDroplist ($this->monthsByYear (false, $truncateAtToday = true), date ('Y'), date ('m'), 'Jump to month: ');
+			$html .= $this->monthIndexDroplist ($this->monthsByYear (false, !$this->settings['truncateMonths']), date ('Y'), date ('m'), 'Jump to month: ');
 			$html .= "\n</div>";
 		}
 		
