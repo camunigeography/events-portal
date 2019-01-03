@@ -100,7 +100,7 @@ class eventsPortal extends frontControllerApplication
 			),
 			'addevents' => array (
 				'description' => 'Add an event',
-				'url' => '/events/add.html',
+				'url' => 'add.html',
 				'tab' => 'Add an event',
 				'authentication' => true,
 				'icon' => 'add',
