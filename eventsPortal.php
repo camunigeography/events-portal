@@ -193,7 +193,7 @@ class eventsPortal extends frontControllerApplication
 			  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
 			  `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
 			  PRIMARY KEY (`username`)
-			) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8mb4_unicode_ci COMMENT='Administrators';
+			) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Administrators';
 			
 			/* INSERT INTO `{$this->settings['administrators']}` VALUES ('{$this->user}',  'Y',  'Administrator', '{$this->settings['administratorEmail']}'); */
 			
@@ -227,7 +227,7 @@ class eventsPortal extends frontControllerApplication
 			  `eventType__JOIN__" . $this->settings['database'] . "__types__reserved` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Type of event',
 			  `adminBan` int(1) DEFAULT NULL COMMENT 'Admin ban for this event',
 			  PRIMARY KEY (`eventId`)
-			) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8mb4_unicode_ci COMMENT='Events';
+			) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Events';
 			
 			CREATE TABLE IF NOT EXISTS `{$this->settings['settingsTable']}` (
 			  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Automatic key (ignored)',
@@ -247,14 +247,14 @@ class eventsPortal extends frontControllerApplication
 			  `logoSmall` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Logo - small (if any)',
 			  `faqHtml` text COLLATE utf8mb4_unicode_ci COMMENT 'FAQ (block of HTML)',
 			  PRIMARY KEY (`id`)
-			) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8mb4_unicode_ci COMMENT='Settings';
+			) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Settings';
 			
 			CREATE TABLE IF NOT EXISTS `types` (
 			  `eventTypeId` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Internal name',
 			  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Event type',
 			  `ordering` tinyint(2) DEFAULT '5' COMMENT 'Ordering (10 = nearest top of list)',
 			  PRIMARY KEY (`eventTypeId`)
-			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8mb4_unicode_ci COMMENT='List of event types';
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='List of event types';
 		";
 	}
 	
