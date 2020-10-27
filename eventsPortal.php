@@ -316,9 +316,6 @@ class eventsPortal extends frontControllerApplication
 		# Get event types
 		$eventTypes = $this->getEventTypes ();
 		
-		# Redirect the user if the jump form has been posted
-		pureContent::jumplistProcessor ();
-		
 		# Validate event type if supplied
 		if ($eventType && !array_key_exists ($eventType, $eventTypes)) {
 			application::sendHeader (404);
@@ -1335,7 +1332,7 @@ if ($this->settings['organisationsMode']) {
 		
 		# Compile the HTML
 		#!# Would be nice if htmlJumplist had nesting support, so that years can be appear nested
-		$html = pureContent::htmlJumplist ($jumplist, $currentYearMonthUrl, false, $name = 'month', $parentTabLevel = 0, $class = 'jumplist', $introductoryText);
+		$html = application::htmlJumplist ($jumplist, $currentYearMonthUrl, false, $name = 'month', $parentTabLevel = 0, $class = 'jumplist', $introductoryText);
 		
 		# Return the HTML
 		return $html;
@@ -1519,7 +1516,7 @@ if ($this->settings['organisationsMode']) {
 				$eventTypesLinked[$key] = $value;
 			}
 			$selected = ($eventType == '' ? false : "{$this->baseUrl}/{$eventType}/");
-			$html .= pureContent::htmlJumplist ($eventTypesLinked, $selected, $this->baseUrl . '/', 'jumplist', 0, 'jumplist', 'Show event type: ');
+			$html .= application::htmlJumplist ($eventTypesLinked, $selected, $this->baseUrl . '/', 'jumplist', 0, 'jumplist', 'Show event type: ');
 		}
 		
 		# Add a special notice, if required
