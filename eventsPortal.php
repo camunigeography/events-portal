@@ -2080,13 +2080,13 @@ if ($this->settings['organisationsMode']) {
 			'name'			=> 'name',
 			'title'					=> 'Your name',
 			'required'				=> true,
-			'default'		=> ($this->settings['useCamUniLookup'] && $this->user && ($userLookupData = camUniData::getLookupData ($this->user)) ? $userLookupData['name'] : ''),
+			'default'		=> $this->userName,
 		));
 		$form->email (array (
 			'name'			=> 'contacts',
 			'title'					=> 'E-mail',
 			'required'				=> true,
-			'default'		=> ($this->user ? $this->user . '@cam.ac.uk' : ''),
+			'default'		=> $this->userEmail,
 		));
 		
 		# Set the processing options
