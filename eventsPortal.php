@@ -1772,6 +1772,7 @@ if ($this->settings['organisationsMode']) {
 		
 		# Construct the query
 		#!# Migrate addslashes to prepared statements
+		#!# "events.startDate > '{$fromStartDate}'" will not work for MySQL 8 as leaves empty string if false
 		$query = "SELECT
 			events.*,
 			/* Preformatted times */
@@ -1781,7 +1782,7 @@ if ($this->settings['organisationsMode']) {
 				DATE_FORMAT(events.endTime,'%l.%i%p') AS endTimeFormatted,
 				IF(events.startDate > '{$fromStartDate}', events.startDate, '{$fromStartDate}') AS entryDate,
 				DATE_FORMAT( IF(events.startDate > '{$fromStartDate}', events.startDate, '{$fromStartDate}') ,'%W %D %M, %Y') AS entryDateFormatted,		/* Note that expandDateRanges() also has a PHP equivalent of the date format */
-				IF((  (endDate = '') || (endDate IS NULL) || (endDate = startDate) || ((DATEDIFF(endDate,startDate) = 1) && (DATE_FORMAT(events.endTime,'%l') <= 7))  ), 1, 0) AS sameDay,
+				IF((  (endDate IS NULL) || (endDate = startDate) || ((DATEDIFF(endDate,startDate) = 1) && (DATE_FORMAT(events.endTime,'%l') <= 7))  ), 1, 0) AS sameDay,
 				IF((endDate < CAST(NOW() as DATE)), 1, 0) AS isRetrospective,
 				IF((startDate = CAST(NOW() as DATE)), 1, 0) AS isToday,
 				IF((startDate = DATE_ADD(CAST(NOW() as DATE), INTERVAL 1 DAY)), 1, 0) AS isTomorrow,
@@ -1810,6 +1811,7 @@ if ($this->settings['organisationsMode']) {
 		
 		# Get the data
 		$data = $this->databaseConnection->getData ($query, "{$this->settings['database']}.events");
+		//var_dump ($this->databaseConnection->error ());
 		
 		# Adjust aspects of the data
 		foreach ($data as $key => $event) {
