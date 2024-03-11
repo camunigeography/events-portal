@@ -1,2 +1,2 @@
-# Ignore any instantiated copy of the bootstrap file
-index.html
+/index.html
+/vendor/
