@@ -3,15 +3,10 @@
 # Load using:
 #	# Events portal
 #	Include /path/to/events-portal/.httpd.conf.extract
-#	Use MacroEventsPortal /events "Events" "/path/to/site/:/path/to/events-portal/:/path/to/php/libraries/"
+#	Use MacroEventsPortal /events "Events"
 
 
-<Macro MacroEventsPortal $baseUrl $description $includePath>
-	
-	# Include path
-	<LocationMatch $baseUrl>
-		php_value include_path "$includePath"
-	</LocationMatch>
+<Macro MacroEventsPortal $baseUrl $description>
 	
 	# Front controller application support
 	Use MacroFrontControllerApplication "$baseUrl/" "$description"

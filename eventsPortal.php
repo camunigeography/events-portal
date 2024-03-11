@@ -24,7 +24,6 @@
 
 
 # Define a class for creating an online event listing system
-require_once ('frontControllerApplication.php');
 class eventsPortal extends frontControllerApplication
 {
 	# Function to assign defaults additional to the general application defaults
@@ -277,15 +276,6 @@ class eventsPortal extends frontControllerApplication
 		if ($this->monthYearIsForthcoming = $this->monthYearIsForthcoming ()) {
 			$this->tabForced = 'home';
 		}
-		
-	}
-	
-	
-	# Additional initialisation
-	public function main ()
-	{
-		# Load required libraries
-		require_once ('image.php');
 		
 	}
 	
@@ -1286,7 +1276,6 @@ if ($this->settings['organisationsMode']) {
 		$latestDate = ($truncateAtToday ? false /* i.e. today */ : $this->getLatestEventDate ());
 		
 		# Get all months since the earliest event date
-		require_once ('timedate.php');
 		$monthsByYear = timedate::getMonthsByYear ($earliestDate, $latestDate, $reverseOrdering);
 		
 		# Return the dates
@@ -2051,7 +2040,6 @@ if ($this->settings['organisationsMode']) {
 		$html .= "\n" . '<img class="diagram right" src="/images/general/message.gif" alt="*" width="48" height="48" border="0" />';
 		
 		# Load and instantiate the form library
-		require_once ('ultimateForm.php');
 		$form = new form (array (
 			'div' => false,
 			'displayDescriptions' => false,
