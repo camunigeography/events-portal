@@ -50,4 +50,4 @@ Martin Lucas-Smith, Department of Geography, University of Cambridge, 2013-14, 2
 License
 -------
 
-GPL2.
+GPL3.
