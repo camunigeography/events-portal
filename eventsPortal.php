@@ -192,7 +192,7 @@ class eventsPortal extends frontControllerApplication
 			  `name` varchar(255) NOT NULL,
 			  `email` varchar(255) NOT NULL,
 			  PRIMARY KEY (`username`)
-			) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Administrators';
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Administrators';
 			
 			/* INSERT INTO `{$this->settings['administrators']}` VALUES ('{$this->user}',  'Y',  'Administrator', '{$this->settings['administratorEmail']}'); */
 			
