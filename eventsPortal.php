@@ -1765,7 +1765,6 @@ if ($this->settings['organisationsMode']) {
 		}
 		
 		# Construct the query
-		#!# Migrate addslashes to prepared statements
 		#!# "events.startDate > '{$fromStartDate}'" will not work for MySQL 8 as leaves empty string if false
 		$query = "SELECT
 			events.*,
@@ -1790,21 +1789,26 @@ if ($this->settings['organisationsMode']) {
 				eventType__JOIN__{$this->settings['database']}__types__reserved = {$this->settings['database']}.types.eventTypeId"
 			/* General */
 				. ($ensureNotDeleted ? " AND (events.deleted = '' OR events.deleted IS NULL)" : '')
-				. ($eventId ? " AND eventId = '" . addslashes ($eventId) . "'" : '')
+				. ($eventId ? ' AND eventId = :eventId' : '')
 				. ($forthcomingOnly ? " AND ( (startDate >= CURDATE()) OR (startDate < CURDATE() AND endDate >= CURDATE()) ) " : '')
 			/* Event types */
-				. ($eventType ? " AND eventType__JOIN__{$this->settings['database']}__types__reserved = '" . addslashes ($eventType) . "'" : '')
+				. ($eventType ? " AND eventType__JOIN__{$this->settings['database']}__types__reserved = :eventType" : '')
 			/* Date ranges */
 				. ($dateConstraintsSql)
 			/* Match the provider and organisation */
-				. ($providerId ? " AND provider = '" . addslashes ($providerId) . "'" : '')
-				. ($organisationId ? " AND organisation = '" . addslashes ($organisationId) . "'" : '') . "
+				. ($providerId ? ' AND provider = :providerId' : '')
+				. ($organisationId ? ' AND organisation = :organisationId' : '') . "
 			ORDER BY
 				startDate, startTime, eventName
 		;";
 		
 		# Get the data
-		$data = $this->databaseConnection->getData ($query, "{$this->settings['database']}.events");
+		$preparedStatementValues = array ();
+		if ($eventId) {$preparedStatementValues['eventId'] = $eventId;}
+		if ($eventType) {$preparedStatementValues['eventType'] = $eventType;}
+		if ($providerId) {$preparedStatementValues['providerId'] = $providerId;}
+		if ($organisationId) {$organisationId['eventId'] = $organisationId;}
+		$data = $this->databaseConnection->getData ($query, "{$this->settings['database']}.events", true, $preparedStatementValues);
 		//var_dump ($this->databaseConnection->error ());
 		
 		# Adjust aspects of the data
