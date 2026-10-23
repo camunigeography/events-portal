@@ -298,7 +298,7 @@ class eventsPortal extends frontControllerApplication
 		);
 		
 		# Run the settings page
-		parent::settings ($dataBindingSettingsOverrides);
+		echo parent::settings ($dataBindingSettingsOverrides);
 	}
 	
 	
@@ -339,8 +339,8 @@ class eventsPortal extends frontControllerApplication
 	public function admin ()
 	{
 		# Create the HTML
-		parent::admin ();
-		$html  = "\n
+		$html  = parent::admin ();
+		$html .= "\n
 		<h3>Events</h3>
 		<ul>
 			<li><a href=\"" . $this->baseUrl . "/listings/\">Listings export</a></li>
@@ -706,7 +706,7 @@ class eventsPortal extends frontControllerApplication
 		}
 		
 		# Add the rest of the feedback page
-		parent::feedback ();
+		echo parent::feedback ();
 	}
 	
 	
