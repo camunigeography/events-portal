@@ -1592,7 +1592,8 @@ if ($this->settings['organisationsMode']) {
 			$table = array ();
 			foreach ($thatDaysEvents as $eventId => $event) {
 				
-				$table[$eventId]['key'] = strtolower ($event['timeCompiledBrief']);
+				#!# If >1 events without a time, these will get overwritten
+				$table[$eventId]['key'] = (!is_null ($event['timeCompiledBrief']) ? strtolower ($event['timeCompiledBrief']) : NULL);
 				$table[$eventId]['value'] = "<a class=\"name\" href=\"{$this->eventsBaseUrl}/{$event['eventId']}/{$event['urlSlug']}/\">" . htmlspecialchars ($event['eventName']) . '</a>';	// $event['eventId'] is the real ID rather than a potential namespaced clone
 				if (!$organisation) {
 					if ($this->settings['organisationsMode']) {
@@ -1870,8 +1871,8 @@ if ($this->settings['organisationsMode']) {
 	private function formatEventDatetime ($data)
 	{
 		# Format the time
-		$data['startTimeFormatted'] = strtolower (str_replace ('.00', '', $data['startTimeFormatted']));
-		$data['endTimeFormatted'] = strtolower (str_replace ('.00', '', $data['endTimeFormatted']));
+		$data['startTimeFormatted'] = (!is_null ($data['startTimeFormatted']) ? strtolower (str_replace ('.00', '', $data['startTimeFormatted'])) : NULL);
+		$data['endTimeFormatted'] = (!is_null ($data['endTimeFormatted']) ? strtolower (str_replace ('.00', '', $data['endTimeFormatted'])) : NULL);
 		
 		# Construct the overall date/time string
 		$data['datetime'] = $data['startDateFormatted'] . ($data['startTimeFormatted'] ? ", {$data['startTimeFormatted']}" : '');	// Default - showing start date & time
