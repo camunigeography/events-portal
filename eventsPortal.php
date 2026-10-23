@@ -544,7 +544,7 @@ class eventsPortal extends frontControllerApplication
 	
 	
 	# JSON output
-	private function eventsfeedjson ($events, $organisationId = false, $feedDescription)
+	private function eventsfeedjson ($events, $organisationId /* = false */, $feedDescription)
 	{
 		# Send the correct header
 		header ('Content-Type: application/json');
@@ -575,7 +575,7 @@ class eventsPortal extends frontControllerApplication
 	
 	
 	# RSS feeds; RSS spec at http://cyber.law.harvard.edu/rss/rss.html
-	private function eventsfeedxml ($events, $organisationId = false, $feedDescription)
+	private function eventsfeedxml ($events, $organisationId /* = false */, $feedDescription)
 	{
 		# Send the correct header
 		header ('Content-Type: application/xml; charset=utf-8');
@@ -625,7 +625,7 @@ class eventsPortal extends frontControllerApplication
 	
 	
 	# Javascript embeddable page
-	private function eventsfeedjs ($events, $organisationId = false, $feedDescription)
+	private function eventsfeedjs ($events, $organisationId /* = false */, $feedDescription)
 	{
 		# Determine whether to add style
 		$styled = true;
