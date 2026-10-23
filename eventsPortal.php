@@ -1,7 +1,6 @@
 <?php
 
 # Event portal system
-# Version 1.2.2
 # 
 # Licence: GPL
 # (c) Martin Lucas-Smith, Cambridge University Students' Union
@@ -26,6 +25,12 @@
 # Define a class for creating an online event listing system
 class eventsPortal extends frontControllerApplication
 {
+	# Class properties
+	private $eventsBaseUrl;
+	private $monthYearIsForthcoming;
+	
+	
+	
 	# Function to assign defaults additional to the general application defaults
 	public function defaults ()
 	{
